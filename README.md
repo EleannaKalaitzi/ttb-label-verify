@@ -11,6 +11,9 @@ stating its **regulatory authority** in plain language.
 > label is half the job. The tool *advises*; the officer decides. Every verdict is
 > overridable and shows its reason and its citation. Nothing is auto-rejected.
 
+🔗 **Live demo:** https://ttb-label-verify-production-8bcd.up.railway.app
+(runs in mock mode — no key required; upload a label from [`images/`](images/) to try it)
+
 📄 The original brief: [`ASSIGNMENT.md`](ASSIGNMENT.md) · Design decisions & rationale:
 [`ARCHITECTURE.md`](ARCHITECTURE.md)
 
@@ -27,7 +30,7 @@ stating its **regulatory authority** in plain language.
 | Server-side batch + CSV export | 🔲 Planned |
 | Measurement harness (sensitivity/specificity) | 🔲 Planned |
 | Measured latency figure | ⏳ Pending a live model key (mock path validated) |
-| Deployed URL | ⏳ Pending |
+| Deployed URL | ✅ **Live** — https://ttb-label-verify-production-8bcd.up.railway.app |
 
 Empirical numbers (latency, accuracy) are intentionally **not** filled in with guesses —
 they will be measured and reported, not asserted.
