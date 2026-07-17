@@ -1,8 +1,8 @@
 # TTB Label Verification — Prototype
 
-An AI-assisted tool that helps a TTB compliance officer verify that a distilled-spirits
-**label** matches the **declared data** from its application, and that the label complies
-with the federal labeling regulations on its own terms.
+An AI-assisted tool that helps a TTB compliance officer verify that an alcohol beverage
+**label** (distilled spirits, wine, or malt beverage) matches the **declared data** from its
+application, and that the label complies with the federal labeling regulations on its own terms.
 
 Two inputs (a label image + the application's declared values) → per-field verdicts, each
 stating its **regulatory authority** in plain language.
@@ -25,12 +25,12 @@ Upload a sample label from [`images/`](images/) to try it.
 | Area | State |
 |---|---|
 | Extraction engine (image → structured data) | ✅ Implemented (Claude Haiku vision + mock mode) |
-| Compliance decision engine — all 7 fields + citations | ✅ Implemented, 90 unit tests passing |
+| Compliance decision engine — all 7 fields + citations | ✅ Implemented, 91 unit tests passing |
 | Content-hash result cache | ✅ Implemented |
 | Single-label UI (508 / WCAG AA) | ✅ Implemented |
 | Server-side batch + CSV export | ✅ Implemented (`/batch`, exception-first view) |
 | Measurement harness (sensitivity/specificity) | ✅ Implemented (`npm run measure`) |
-| Measured latency figure | ✅ **p50 2.6 s / max 3.7 s** (warm, live `claude-haiku-4-5`) |
+| Measured latency figure | ✅ **p50 ≈ 2.9 s** (live `claude-haiku-4-5`; tail varies — see Measurement) |
 | Deployed URL | ✅ **Live** — https://ttb-label-verify-production-8bcd.up.railway.app |
 
 Every figure above is **measured, not asserted** — see [Measurement](#measurement-measured-live).
@@ -110,12 +110,17 @@ Roll-up: any `FAIL` → `FAIL`; else any `FLAG` → `FLAG`; else `PASS`.
 4. **Net contents** — parsed to millilitres, so `750 mL` = `0.75 L`; a real volume
    difference fails.
 5. **Producer / bottler** — name & address, cautious text match (cosmetic differences pass).
-6. **Country of origin** — cautious match; a domestic product (none declared, none shown) is
-   a PASS, not a gap; lead-ins like "Product of" are ignored.
+6. **Country of origin** — cautious match; lead-ins like "Product of" are ignored. When no
+   country is declared *or* shown, the tool never *assumes* domestic: it PASSes only with
+   positive evidence (a U.S. producer address), otherwise it **FLAGs** for a human — because a
+   missing country on an *import* is a real violation it must not wave through.
 
 **Against the regulations**
 7. **Government health warning** — three separate checks, three citations (below).
 8. **Standard of identity** — is the class/type designation lawful at the stated ABV?
+   Authoritative for **distilled spirits** (27 CFR Part 5); for wine (Part 4) and malt
+   beverages (Part 7) it honestly reports *"not evaluated"* with a pointer to the governing
+   part, rather than guessing.
 
 ---
 
@@ -196,14 +201,23 @@ via `npm run measure`. The harness scores the full pipeline (model reads image �
 decides) against each fixture's known verdict; ground truth per check is the verdict on a
 *perfect* read, so any discrepancy isolates an error the **vision step** introduced.
 
-**Results (8-label corpus, live model):**
+**Results (9-label corpus, live model):**
 
 | Metric | Value |
 |---|---|
-| Overall verdict accuracy | **8 / 8** |
-| Per-check sensitivity & specificity | **100%** across all 11 checks |
-| Latency (warm) | **p50 2.6 s · max 3.7 s** — within the 5-second budget |
-| Confusion | PASS→PASS ×1 · FLAG→FLAG ×2 · FAIL→FAIL ×5 (no off-diagonal) |
+| Overall verdict accuracy | **9 / 9** |
+| Per-check sensitivity & specificity | **100%** across all checks |
+| Latency | **p50 ≈ 2.9 s** — within the "about 5 seconds" target |
+| Confusion | PASS→PASS ×1 · FLAG→FLAG ×3 · FAIL→FAIL ×5 (no off-diagonal) |
+
+> **Latency, disclosed honestly.** The *median* is ~2.9 s and meets the stated "about 5
+> seconds" adoption bar. But **latency scales with image size**, and images are sent at full
+> fidelity (a deliberate choice — no downscaling, to avoid altering the reviewer's input), so
+> a large photograph can take longer and individual calls occasionally exceed 5 s (up to
+> ~7.7 s observed). Mitigations: the content-hash **cache** makes a repeat label instant,
+> **server-side batch** never blocks the reviewer, and the startup **warmup** removes the
+> one-time cold call. Tightening the tail further would mean downscaling large uploads or an
+> on-prem model — both available behind the existing seams, deliberately not enabled here.
 
 **Honest caveats:**
 - **Cold start ≈ 8 s on the first call** — a one-time structured-output schema compilation
@@ -237,9 +251,12 @@ decides) against each fixture's known verdict; ground truth per check is the ver
 ## Out of scope (with rationale)
 
 COLA integration · authentication · persistence/database · image preprocessing (deskew/glare)
-· type-size measurement · live regulatory fetching · wine and malt beverages · full Subpart I
-rule engine. Distilled spirits only. This is a standalone proof-of-concept; depth on the core
-checks was chosen over breadth.
+· image downscaling · type-size measurement · live regulatory fetching · full standards of
+identity for wine (Part 4) and malt beverages (Part 7). **All beverage types are accepted** and
+checked on the universal requirements (warning, brand, class/type, ABV, net contents, bottler,
+country); the deep standard-of-identity check is implemented for distilled spirits, with
+wine/malt honestly reported as *"not evaluated"* rather than guessed. This is a standalone
+proof-of-concept; depth on the core checks was chosen over breadth.
 
 ---
 

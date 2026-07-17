@@ -89,7 +89,7 @@ export default function Home() {
         <p className={styles.kicker}>Official prototype · TTB Compliance Division</p>
         <h1 className={styles.docTitle}>Label Verification Worksheet</h1>
         <p className={styles.docMeta}>
-          27 CFR Parts 5 &amp; 16 · Distilled spirits · <Link href="/batch">batch review →</Link>
+          27 CFR Parts 4, 5, 7 &amp; 16 · Alcohol beverages · <Link href="/batch">batch review →</Link>
         </p>
         <hr className={styles.ruleDouble} />
       </header>

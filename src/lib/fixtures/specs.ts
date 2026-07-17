@@ -202,6 +202,28 @@ export const FIXTURES: LabelSpec[] = [
     expectedOverall: 'FAIL',
     expectedNote: 'Vodka at 38% ABV is below the 40% minimum bottling strength for neutral spirits (§ 5.142).',
   },
+  {
+    id: '09-wine-not-evaluated',
+    title: 'Wine label (all-beverage handling)',
+    targets:
+      'All beverage types are accepted. Universal checks (warning, comparisons) run; the spirits-only standard-of-identity check honestly reports "not evaluated" for wine (Part 4) — never a fake verdict.',
+    brand: 'RIVERBEND',
+    classType: 'Cabernet Sauvignon',
+    abv: 13.5,
+    proof: null,
+    bottler: 'Riverbend Cellars, Napa, CA',
+    warning: CLEAN_WARNING,
+    declared: {
+      brand_name: 'Riverbend',
+      class_type: 'Cabernet Sauvignon',
+      alcohol_content: '13.5%',
+      net_contents: DEFAULT_NET_CONTENTS,
+      producer_bottler: 'Riverbend Cellars, Napa, CA',
+      country_of_origin: null,
+    },
+    expectedOverall: 'FLAG',
+    expectedNote: 'Warning + comparisons pass; wine standard of identity (Part 4) is not evaluated → FLAG for review.',
+  },
 ];
 
 /** The "perfect read" a vision model should produce for a fixture. */

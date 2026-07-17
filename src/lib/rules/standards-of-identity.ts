@@ -116,16 +116,26 @@ export function checkStandardOfIdentity(
 
   const soi = matchStandard(classType);
   if (soi == null) {
+    // Beverage-aware: point wine/malt designations at their own regulations
+    // rather than a spirits-framed message. The spirits table is authoritative;
+    // other beverage types are honestly "not evaluated".
+    const t = classType.toLowerCase();
+    const domain = /\b(wine|champagne|sparkling|port|sherry|vermouth|sauvignon|cabernet|chardonnay|merlot|pinot|riesling|zinfandel|ros[eé]|prosecco|moscato|sangria)\b/.test(t)
+      ? { section: '27 CFR Part 4', url: 'https://www.ecfr.gov/current/title-27/part-4', kind: 'Wine' }
+      : /\b(beer|ale|lager|stout|porter|ipa|pilsner|malt liquor|malt beverage)\b/.test(t)
+        ? { section: '27 CFR Part 7', url: 'https://www.ecfr.gov/current/title-27/part-7', kind: 'Malt-beverage' }
+        : { section: '27 CFR Part 5, Subpart I', url: SUBPART_I, kind: 'Distilled-spirits' };
     return {
       ...base,
       verdict: 'FLAG',
       reason:
-        `The designation “${classType}” is not in this tool's standards-of-identity table, so its ` +
-        `class/type validity was not evaluated. A reviewer should assess it against Part 5, Subpart I.`,
+        `“${classType}” is outside this tool's standards-of-identity rule set (which covers distilled ` +
+        `spirits). ${domain.kind} standards of identity (${domain.section}) are not evaluated here — a ` +
+        `reviewer should assess it directly.`,
       citation: {
-        section: '27 CFR Part 5, Subpart I',
-        authority: SUBPART_I,
-        plainLanguage: 'Class and type designations are legally defined standards of identity.',
+        section: domain.section,
+        authority: domain.url,
+        plainLanguage: 'Class and type designations are legally defined standards of identity, by beverage type.',
       },
     };
   }
