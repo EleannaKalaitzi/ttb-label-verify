@@ -11,7 +11,8 @@
     "spike:mock": "MOCK_EXTRACTION=1 tsx scripts/spike.ts",
     "test": "node --import tsx --test \"src/**/*.test.ts\"",
     "demo": "tsx scripts/demo-verdicts.ts",
-    "fixtures": "tsx scripts/render-fixtures.ts"
+    "fixtures": "tsx scripts/render-fixtures.ts",
+    "measure": "tsx scripts/measure.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.112.1",

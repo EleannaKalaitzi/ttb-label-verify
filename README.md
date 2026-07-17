@@ -162,7 +162,14 @@ navigation, `aria-live` announcements, 200% text scaling, and plain-language cop
 
 ---
 
-## Measurement (methodology; results pending)
+## Measurement (harness built; live numbers pending a key)
+
+The harness is built — `npm run measure` scores the fixture corpus through the full
+pipeline (model reads image → engine decides) against each fixture's known verdict. Ground
+truth per check is the verdict on a *perfect* read, so discrepancies isolate exactly the
+errors the vision step introduces. In **mock mode** it reports the deterministic-engine
+baseline (100% by construction); the meaningful **vision-accuracy** numbers come from a
+live-key run and will be published here.
 
 Accuracy will be **reported, not claimed**:
 - Per-check **sensitivity and specificity** against a labelled corpus — not an aggregate
