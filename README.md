@@ -11,6 +11,9 @@ stating its **regulatory authority** in plain language.
 > label is half the job. The tool *advises*; the officer decides. Every verdict is
 > overridable and shows its reason and its citation. Nothing is auto-rejected.
 
+📄 The original brief: [`ASSIGNMENT.md`](ASSIGNMENT.md) · Design decisions & rationale:
+[`ARCHITECTURE.md`](ARCHITECTURE.md)
+
 ---
 
 ## Status
