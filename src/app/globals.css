@@ -1,25 +1,23 @@
 /*
- * Base + design tokens. A fixed high-contrast light theme is deliberate: a
- * compliance tool benefits from one predictable, WCAG-AA-verified palette rather
- * than a dark variant whose verdict contrasts would need re-checking.
+ * "Technical dossier" theme — a typewritten compliance worksheet.
+ * Cream paper, black ink, monospace throughout. One fixed high-contrast theme
+ * (verdict colours are WCAG-AA verified on the cream background).
  */
 :root {
-  --bg: #f5f6f8;
-  --panel: #ffffff;
-  --ink: #1a1d21; /* body text on white ≈ 16:1 */
-  --ink-soft: #4b5563; /* secondary text on white ≈ 7:1 */
-  --line: #e2e5ea;
-  --line-strong: #b8bec9;
+  --paper: #f4edda; /* cream */
+  --paper-2: #efe6cf; /* slightly deeper cream for insets */
+  --ink: #17130c; /* near-black on cream ≈ 15:1 */
+  --ink-soft: #5a5138; /* muted ink on cream ≈ 6:1 */
+  --rule: #cdbf9a; /* hairline rules (aged) */
+  --rule-strong: #8a7c58;
 
-  --accent: #1b4f8a; /* white on this ≈ 7:1 */
-  --accent-hover: #163f6f;
+  --accent: #6b4f1d; /* sepia accent for links */
 
-  --pass-ink: #12643a;
-  --pass-bg: #e4f4ea;
-  --flag-ink: #7a4d00;
-  --flag-bg: #fbeecb;
-  --fail-ink: #9a1b12;
-  --fail-bg: #fbe4e1;
+  /* Verdict colours — high contrast on cream; text stays near-black, colour
+     carries only on the status symbol/tag (paired with an icon and a word). */
+  --pass: #1a6b34;
+  --flag: #8a5a00;
+  --fail: #a3160b;
 }
 
 * {
@@ -36,9 +34,10 @@ body {
 body {
   min-height: 100dvh;
   color: var(--ink);
-  background: var(--bg);
-  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
+  background: var(--paper);
+  font-family: var(--font-mono), ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace;
+  font-size: 15px;
+  line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -47,9 +46,8 @@ a {
   color: var(--accent);
 }
 
-/* Visible keyboard focus everywhere (WCAG 2.4.7). */
+/* Visible keyboard focus (WCAG 2.4.7). */
 :focus-visible {
-  outline: 3px solid var(--accent);
+  outline: 2px solid var(--ink);
   outline-offset: 2px;
-  border-radius: 3px;
 }
