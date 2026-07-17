@@ -22,7 +22,7 @@ const sample: Extraction = {
 class CountingProvider implements ExtractionProvider {
   calls = 0;
   constructor(private result: ExtractionResult) {}
-  async extract(_input: ExtractionInput): Promise<ExtractionResult> {
+  async extract(): Promise<ExtractionResult> {
     this.calls++;
     return this.result;
   }
