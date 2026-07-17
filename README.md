@@ -11,8 +11,9 @@ stating its **regulatory authority** in plain language.
 > label is half the job. The tool *advises*; the officer decides. Every verdict is
 > overridable and shows its reason and its citation. Nothing is auto-rejected.
 
-🔗 **Live demo:** https://ttb-label-verify-production-8bcd.up.railway.app
-(runs in mock mode — no key required; upload a label from [`images/`](images/) to try it)
+🔗 **Live demo:** https://ttb-label-verify-production-8bcd.up.railway.app — reads real labels via
+Claude Haiku (single-label + [`/batch`](https://ttb-label-verify-production-8bcd.up.railway.app/batch)).
+Upload a sample label from [`images/`](images/) to try it.
 
 📄 The original brief: [`ASSIGNMENT.md`](ASSIGNMENT.md) · Design decisions & rationale:
 [`ARCHITECTURE.md`](ARCHITECTURE.md)
@@ -24,16 +25,16 @@ stating its **regulatory authority** in plain language.
 | Area | State |
 |---|---|
 | Extraction engine (image → structured data) | ✅ Implemented (Claude Haiku vision + mock mode) |
-| Compliance decision engine — all 7 fields + citations | ✅ Implemented, 88 unit tests passing |
+| Compliance decision engine — all 7 fields + citations | ✅ Implemented, 90 unit tests passing |
 | Content-hash result cache | ✅ Implemented |
 | Single-label UI (508 / WCAG AA) | ✅ Implemented |
 | Server-side batch + CSV export | ✅ Implemented (`/batch`, exception-first view) |
 | Measurement harness (sensitivity/specificity) | ✅ Implemented (`npm run measure`) |
-| Measured latency figure | ✅ **p50 2.9 s / max 3.3 s** (warm, live `claude-haiku-4-5`) |
+| Measured latency figure | ✅ **p50 2.6 s / max 3.7 s** (warm, live `claude-haiku-4-5`) |
 | Deployed URL | ✅ **Live** — https://ttb-label-verify-production-8bcd.up.railway.app |
 
-Empirical numbers (latency, accuracy) are intentionally **not** filled in with guesses —
-they will be measured and reported, not asserted.
+Every figure above is **measured, not asserted** — see [Measurement](#measurement-measured-live).
+Nothing is filled in with a guess.
 
 ---
 
@@ -48,8 +49,11 @@ npm install
 npm run demo          # prints verdicts for several example labels
 npm run spike:mock    # runs one extraction through the pipeline + latency
 
-# 2. Run the test suite (42 tests, no key needed):
+# 2. Run the test suite (90 tests, no key needed):
 npm test
+
+# ...and the measurement harness (no key = engine baseline; with a key = live accuracy):
+npm run measure
 
 # 3. Run against the real model (needs a key):
 cp .env.example .env  # then paste your ANTHROPIC_API_KEY
@@ -179,7 +183,7 @@ evaluated"*, an honest gap rather than a guessed verdict.
 
 A hard requirement, not polish: under the Rehabilitation Act § 508 (the 2017 Refresh
 incorporates WCAG 2.0 AA by reference), a tool that cannot meet it cannot be procured,
-irrespective of function. The UI (in progress) is being built to this standard from the first
+irrespective of function. The UI is built to this standard from the first
 line — verdicts conveyed by colour **and** icon **and** text, ≥ 4.5:1 contrast, full keyboard
 navigation, `aria-live` announcements, 200% text scaling, and plain-language copy.
 
@@ -192,19 +196,20 @@ via `npm run measure`. The harness scores the full pipeline (model reads image �
 decides) against each fixture's known verdict; ground truth per check is the verdict on a
 *perfect* read, so any discrepancy isolates an error the **vision step** introduced.
 
-**Results (6-label corpus):**
+**Results (8-label corpus, live model):**
 
 | Metric | Value |
 |---|---|
-| Overall verdict accuracy | **6 / 6** |
+| Overall verdict accuracy | **8 / 8** |
 | Per-check sensitivity & specificity | **100%** across all 11 checks |
-| Latency (warm) | **p50 2.9 s · max 3.3 s** — within the 5-second budget |
-| Confusion | PASS→PASS ×1 · FLAG→FLAG ×2 · FAIL→FAIL ×3 (no off-diagonal) |
+| Latency (warm) | **p50 2.6 s · max 3.7 s** — within the 5-second budget |
+| Confusion | PASS→PASS ×1 · FLAG→FLAG ×2 · FAIL→FAIL ×5 (no off-diagonal) |
 
 **Honest caveats:**
 - **Cold start ≈ 8 s on the first call** — a one-time structured-output schema compilation
-  (subsequent calls are cached ~24 h). Mitigated in production by warming the schema after
-  deploy; documented, not hidden.
+  (subsequent calls are cached ~24 h). Mitigated by a startup warmup (Next.js
+  `instrumentation.ts`) that compiles the schema on boot, so a reviewer's first request is
+  already warm; documented, not hidden.
 - **The corpus is synthetic** (pixel-exact rendered labels), so the vision step reads them
   cleanly and high accuracy is expected. These numbers validate the *engine and pipeline
   end-to-end*; the harder test is real photographs (glare, angles), which is the natural
@@ -244,10 +249,13 @@ checks was chosen over breadth.
 src/lib/
   extraction/   image → structured data (schema, prompt, provider seam, mock, Haiku, cache)
   verdict/      PASS/FLAG/FAIL types + citation shape + roll-up
-  compare/      normalizer, brand, class/type, ABV + proof cross-check
+  compare/      normalizer + comparators (brand, class/type, ABV/proof, net contents, bottler, country)
   rules/        government-warning checks, standards-of-identity table
   verify/       orchestrator: extraction + declared data → all verdicts
-scripts/        spike (latency), demo (verdicts), all runnable without a key
+  batch/        server-side batch runner + CSV export
+  fixtures/     adversarial label specs (the measurement corpus)
+src/app/        single-label UI, /batch UI, /api/{verify,batch,health} routes
+scripts/        spike, demo, fixtures (render), measure — all runnable without a key
 ```
 
 Run `npm test` to exercise every check at its boundaries, including the FLAG/FAIL thresholds.
