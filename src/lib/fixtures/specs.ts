@@ -159,6 +159,49 @@ export const FIXTURES: LabelSpec[] = [
     expectedOverall: 'FLAG',
     expectedNote: 'Proof 100 implies 50% ABV but the label says 45% → FLAG (internal inconsistency).',
   },
+  {
+    id: '07-warning-wrong-wording',
+    title: 'Warning wording altered',
+    targets: '§ 16.21 — the warning is not the exact statutory wording (a clause is missing/changed).',
+    brand: "STONE'S THROW",
+    classType: 'Kentucky Straight Bourbon Whiskey',
+    abv: 45,
+    proof: 90,
+    warning: {
+      text:
+        'GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink ' +
+        'alcoholic beverages during pregnancy. (2) Consumption of alcoholic beverages may cause ' +
+        'health problems.',
+      prefixCaps: true,
+      prefixBold: true,
+      remainderBold: false,
+      continuous: true,
+    },
+    declared: STANDARD_APP,
+    expectedOverall: 'FAIL',
+    expectedNote: 'Wording differs from the § 16.21 statutory text (missing/changed clauses) → FAIL.',
+  },
+  {
+    id: '08-vodka-underproof',
+    title: 'Vodka bottled at 38%',
+    targets: 'Standards of identity generalizes beyond whiskey — vodka carries the same 40% minimum (§ 5.142).',
+    brand: 'NORTH STAR',
+    classType: 'Vodka',
+    abv: 38,
+    proof: 76,
+    bottler: 'North Star Spirits, Portland, OR',
+    warning: CLEAN_WARNING,
+    declared: {
+      brand_name: 'North Star',
+      class_type: 'Vodka',
+      alcohol_content: '38%',
+      net_contents: DEFAULT_NET_CONTENTS,
+      producer_bottler: 'North Star Spirits, Portland, OR',
+      country_of_origin: null,
+    },
+    expectedOverall: 'FAIL',
+    expectedNote: 'Vodka at 38% ABV is below the 40% minimum bottling strength for neutral spirits (§ 5.142).',
+  },
 ];
 
 /** The "perfect read" a vision model should produce for a fixture. */

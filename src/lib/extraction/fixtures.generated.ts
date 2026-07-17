@@ -117,5 +117,43 @@ export const FIXTURE_EXTRACTIONS: Record<string, Extraction> = {
       "remainder_bold": false,
       "is_continuous": true
     }
+  },
+  "7c55f7a78ce001b0a64f599fd39d45531437db601fedae95ee68b9ea4aed3b39": {
+    "brand_name": "STONE'S THROW",
+    "class_type": "Kentucky Straight Bourbon Whiskey",
+    "alcohol_content": {
+      "abv_percent": 45,
+      "proof": 90
+    },
+    "net_contents": "750 mL",
+    "producer_bottler": "Stone's Throw Distillery, Louisville, KY",
+    "country_of_origin": null,
+    "government_warning": {
+      "present": true,
+      "text": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy. (2) Consumption of alcoholic beverages may cause health problems.",
+      "first_two_words_all_caps": true,
+      "first_two_words_bold": true,
+      "remainder_bold": false,
+      "is_continuous": true
+    }
+  },
+  "a65463531fdaf28905a224b4a0d13156468e256a965e60fa091ab53c151b2f3f": {
+    "brand_name": "NORTH STAR",
+    "class_type": "Vodka",
+    "alcohol_content": {
+      "abv_percent": 38,
+      "proof": 76
+    },
+    "net_contents": "750 mL",
+    "producer_bottler": "North Star Spirits, Portland, OR",
+    "country_of_origin": null,
+    "government_warning": {
+      "present": true,
+      "text": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems.",
+      "first_two_words_all_caps": true,
+      "first_two_words_bold": true,
+      "remainder_bold": false,
+      "is_continuous": true
+    }
   }
 };
