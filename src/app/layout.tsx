@@ -14,7 +14,7 @@ const mono = localFont({
 export const metadata: Metadata = {
   title: 'TTB Label Verification',
   description:
-    'Verify a distilled-spirits label against its application and the federal labeling regulations.',
+    'Verify an alcohol beverage label against its application and the federal labeling regulations.',
 };
 
 export default function RootLayout({

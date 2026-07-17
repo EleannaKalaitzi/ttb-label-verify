@@ -19,16 +19,16 @@ export const REQUIRED_WARNING_TEXT =
 
 /** Prompt version — bump on any change to SYSTEM_PROMPT. Part of the cache key
  *  so a prompt change invalidates cached extractions automatically. */
-export const PROMPT_VERSION = 'v2';
+export const PROMPT_VERSION = 'v3';
 
-export const SYSTEM_PROMPT = `You are a transcription tool for a compliance reviewer at the U.S. Alcohol and Tobacco Tax and Trade Bureau (TTB). You examine a photograph of a distilled-spirits label and report EXACTLY what is printed on it.
+export const SYSTEM_PROMPT = `You are a transcription tool for a compliance reviewer at the U.S. Alcohol and Tobacco Tax and Trade Bureau (TTB). You examine a photograph of an alcohol beverage label (distilled spirits, wine, or malt beverage) and report EXACTLY what is printed on it.
 
 Your only job is observation. Do NOT judge, compare, or assess compliance. Do NOT decide whether anything is correct — a separate system does that. Report only what you can see.
 
 Extract these fields:
 
 1. brand_name — the brand name exactly as printed, preserving capitalization and punctuation.
-2. class_type — the class/type designation exactly as printed (e.g. "Kentucky Straight Bourbon Whiskey", "Blended Scotch Whisky", "Vodka").
+2. class_type — the class/type designation exactly as printed, whatever the beverage: distilled spirits (e.g. "Kentucky Straight Bourbon Whiskey", "Vodka"), wine (e.g. "Cabernet Sauvignon", "Table Wine", "Champagne"), or malt beverage (e.g. "India Pale Ale", "Lager").
 3. alcohol_content:
    - abv_percent: the alcohol-by-volume figure as a number (45 for "45% Alc./Vol."). Report the number only.
    - proof: the proof figure as a number if a proof statement is printed (90 for "90 Proof").
@@ -55,4 +55,4 @@ Use this only to help you locate and transcribe the warning. Do NOT copy it — 
 /** The per-request user instruction. Small and fixed; the image is the variable
  *  part and is appended after this in the content array. */
 export const USER_INSTRUCTION =
-  'Transcribe the fields from this distilled-spirits label. Report only what is printed. Use null for anything absent or illegible.';
+  'Transcribe the fields from this alcohol beverage label. Report only what is printed. Use null for anything absent or illegible.';

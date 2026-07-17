@@ -74,7 +74,9 @@ export function verify(
 
   verdicts.push(compareNetContents(declared.net_contents, extraction.net_contents));
   verdicts.push(compareBottler(declared.producer_bottler, extraction.producer_bottler));
-  verdicts.push(compareCountry(declared.country_of_origin, extraction.country_of_origin));
+  verdicts.push(
+    compareCountry(declared.country_of_origin, extraction.country_of_origin, extraction.producer_bottler),
+  );
 
   // Against the regulations.
   verdicts.push(...checkWarning(extraction.government_warning));

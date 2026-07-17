@@ -39,9 +39,15 @@ test('compareBottler: cosmetic difference PASSes; clearly different FAILs; missi
 });
 
 // ---- country of origin ----
-test('compareCountry: both absent = PASS (domestic)', () => {
-  assert.equal(compareCountry(null, null).verdict, 'PASS');
-  assert.equal(compareCountry('', '  ').verdict, 'PASS');
+test('compareCountry: both absent — domestic ONLY with U.S. producer evidence, else FLAG', () => {
+  // No evidence of origin → never assume domestic → FLAG for review
+  assert.equal(compareCountry(null, null).verdict, 'FLAG');
+  assert.equal(compareCountry(null, null, 'Acme Beverages').verdict, 'FLAG');
+  // Foreign producer, no country stated → still FLAG
+  assert.equal(compareCountry(null, null, 'Highland Distillers, Edinburgh').verdict, 'FLAG');
+  // U.S. producer address → positive evidence of domestic → PASS
+  assert.equal(compareCountry(null, null, "Stone's Throw Distillery, Louisville, KY").verdict, 'PASS');
+  assert.equal(compareCountry(null, null, 'Napa Cellars, USA').verdict, 'PASS');
 });
 
 test('compareCountry: declared-but-not-on-label, and on-label-but-not-declared, both FLAG', () => {

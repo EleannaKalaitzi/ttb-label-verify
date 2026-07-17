@@ -155,5 +155,24 @@ export const FIXTURE_EXTRACTIONS: Record<string, Extraction> = {
       "remainder_bold": false,
       "is_continuous": true
     }
+  },
+  "ab03afe0376c9b61c247f5546f0ee4bf339309045215a90e6a714e9254245039": {
+    "brand_name": "RIVERBEND",
+    "class_type": "Cabernet Sauvignon",
+    "alcohol_content": {
+      "abv_percent": 13.5,
+      "proof": null
+    },
+    "net_contents": "750 mL",
+    "producer_bottler": "Riverbend Cellars, Napa, CA",
+    "country_of_origin": null,
+    "government_warning": {
+      "present": true,
+      "text": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems.",
+      "first_two_words_all_caps": true,
+      "first_two_words_bold": true,
+      "remainder_bold": false,
+      "is_continuous": true
+    }
   }
 };
