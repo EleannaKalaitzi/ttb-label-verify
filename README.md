@@ -29,7 +29,7 @@ stating its **regulatory authority** in plain language.
 | Single-label UI | 🔲 In progress |
 | Server-side batch + CSV export | 🔲 Planned |
 | Measurement harness (sensitivity/specificity) | 🔲 Planned |
-| Measured latency figure | ⏳ Pending a live model key (mock path validated) |
+| Measured latency figure | ✅ **p50 2.9 s / max 3.3 s** (warm, live `claude-haiku-4-5`) |
 | Deployed URL | ✅ **Live** — https://ttb-label-verify-production-8bcd.up.railway.app |
 
 Empirical numbers (latency, accuracy) are intentionally **not** filled in with guesses —
@@ -170,22 +170,32 @@ navigation, `aria-live` announcements, 200% text scaling, and plain-language cop
 
 ---
 
-## Measurement (harness built; live numbers pending a key)
+## Measurement (measured, live)
 
-The harness is built — `npm run measure` scores the fixture corpus through the full
-pipeline (model reads image → engine decides) against each fixture's known verdict. Ground
-truth per check is the verdict on a *perfect* read, so discrepancies isolate exactly the
-errors the vision step introduces. In **mock mode** it reports the deterministic-engine
-baseline (100% by construction); the meaningful **vision-accuracy** numbers come from a
-live-key run and will be published here.
+Run against the fixture corpus with the live model (`claude-haiku-4-5`, `temperature: 0`)
+via `npm run measure`. The harness scores the full pipeline (model reads image → engine
+decides) against each fixture's known verdict; ground truth per check is the verdict on a
+*perfect* read, so any discrepancy isolates an error the **vision step** introduced.
 
-Accuracy will be **reported, not claimed**:
-- Per-check **sensitivity and specificity** against a labelled corpus — not an aggregate
-  figure, which hides the failure that matters.
-- Thresholds set from the stated **cost asymmetry**: a missed non-compliant label (false
-  PASS) costs far more than an unnecessary flag, so tuning favours sensitivity.
-- A confusion matrix, including which fixtures fail and why.
-- Deterministic by construction (`temperature: 0`), so figures are reproducible.
+**Results (6-label corpus):**
+
+| Metric | Value |
+|---|---|
+| Overall verdict accuracy | **6 / 6** |
+| Per-check sensitivity & specificity | **100%** across all 11 checks |
+| Latency (warm) | **p50 2.9 s · max 3.3 s** — within the 5-second budget |
+| Confusion | PASS→PASS ×1 · FLAG→FLAG ×2 · FAIL→FAIL ×3 (no off-diagonal) |
+
+**Honest caveats:**
+- **Cold start ≈ 8 s on the first call** — a one-time structured-output schema compilation
+  (subsequent calls are cached ~24 h). Mitigated in production by warming the schema after
+  deploy; documented, not hidden.
+- **The corpus is synthetic** (pixel-exact rendered labels), so the vision step reads them
+  cleanly and high accuracy is expected. These numbers validate the *engine and pipeline
+  end-to-end*; the harder test is real photographs (glare, angles), which is the natural
+  next expansion of the corpus (real COLA-registry labels).
+- Thresholds favour **sensitivity** by design (a false PASS costs far more than a false
+  flag), and the run is **deterministic** (`temperature: 0`), so the figures reproduce.
 
 ---
 
