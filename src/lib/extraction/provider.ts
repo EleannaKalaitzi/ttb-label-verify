@@ -60,3 +60,14 @@ export async function getExtractionProvider(): Promise<ExtractionProvider> {
   const { AnthropicProvider, MODEL } = await import('./anthropic');
   return new CachingProvider(new AnthropicProvider(), `${MODEL}:${PROMPT_VERSION}`);
 }
+
+/**
+ * Process-wide singleton, memoized so the content-hash cache survives across
+ * requests. On Railway's persistent container this means a re-checked label is
+ * genuinely instant. Request handlers should use this, not getExtractionProvider.
+ */
+let shared: Promise<ExtractionProvider> | null = null;
+export function getSharedExtractionProvider(): Promise<ExtractionProvider> {
+  if (!shared) shared = getExtractionProvider();
+  return shared;
+}
