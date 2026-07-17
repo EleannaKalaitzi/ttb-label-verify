@@ -10,7 +10,8 @@
     "spike": "tsx scripts/spike.ts",
     "spike:mock": "MOCK_EXTRACTION=1 tsx scripts/spike.ts",
     "test": "node --import tsx --test \"src/**/*.test.ts\"",
-    "demo": "tsx scripts/demo-verdicts.ts"
+    "demo": "tsx scripts/demo-verdicts.ts",
+    "fixtures": "tsx scripts/render-fixtures.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.112.1",
@@ -25,6 +26,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.10",
+    "sharp": "^0.35.3",
     "tsx": "^4.23.1",
     "typescript": "^5"
   }
