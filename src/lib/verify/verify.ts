@@ -84,3 +84,40 @@ export function verify(
 
   return { overall: rollup(verdicts), verdicts, extraction };
 }
+
+/**
+ * Label-only verification for batch runs, where there is no per-image
+ * application data to compare against. Runs the checks a label can be judged on
+ * by itself — the regulatory ones (warning, standard of identity) plus the
+ * internal proof/ABV consistency cross-check. This surfaces labels that are
+ * non-compliant on their own terms across a high-volume submission.
+ */
+export function verifyLabelOnly(extraction: Extraction | null): VerificationResult {
+  if (extraction == null) {
+    return {
+      overall: 'FLAG',
+      verdicts: [
+        {
+          check: 'extraction',
+          label: 'Label reading',
+          verdict: 'FLAG',
+          reason: 'The label image could not be read automatically. A reviewer should check it by hand.',
+        },
+      ],
+      extraction: null,
+    };
+  }
+
+  const verdicts: FieldVerdict[] = [];
+  const proofCheck = crossCheckProof(
+    extraction.alcohol_content.abv_percent,
+    extraction.alcohol_content.proof,
+  );
+  if (proofCheck) verdicts.push(proofCheck);
+  verdicts.push(...checkWarning(extraction.government_warning));
+  verdicts.push(
+    checkStandardOfIdentity(extraction.class_type, extraction.alcohol_content.abv_percent),
+  );
+
+  return { overall: rollup(verdicts), verdicts, extraction };
+}

@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
+import Link from 'next/link';
 import type { FieldVerdict, Verdict } from '@/lib/verdict/types';
 import type { Extraction } from '@/lib/extraction/schema';
 import styles from './page.module.css';
@@ -87,7 +88,9 @@ export default function Home() {
       <header className={styles.docHead}>
         <p className={styles.kicker}>Official prototype · TTB Compliance Division</p>
         <h1 className={styles.docTitle}>Label Verification Worksheet</h1>
-        <p className={styles.docMeta}>27 CFR Parts 5 &amp; 16 · Distilled spirits</p>
+        <p className={styles.docMeta}>
+          27 CFR Parts 5 &amp; 16 · Distilled spirits · <Link href="/batch">batch review →</Link>
+        </p>
         <hr className={styles.ruleDouble} />
       </header>
 

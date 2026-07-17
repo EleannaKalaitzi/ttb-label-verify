@@ -24,11 +24,11 @@ stating its **regulatory authority** in plain language.
 | Area | State |
 |---|---|
 | Extraction engine (image → structured data) | ✅ Implemented (Claude Haiku vision + mock mode) |
-| Compliance decision engine (all checks + citations) | ✅ Implemented, 42 unit tests passing |
+| Compliance decision engine — all 7 fields + citations | ✅ Implemented, 88 unit tests passing |
 | Content-hash result cache | ✅ Implemented |
-| Single-label UI | 🔲 In progress |
-| Server-side batch + CSV export | 🔲 Planned |
-| Measurement harness (sensitivity/specificity) | 🔲 Planned |
+| Single-label UI (508 / WCAG AA) | ✅ Implemented |
+| Server-side batch + CSV export | ✅ Implemented (`/batch`, exception-first view) |
+| Measurement harness (sensitivity/specificity) | ✅ Implemented (`npm run measure`) |
 | Measured latency figure | ✅ **p50 2.9 s / max 3.3 s** (warm, live `claude-haiku-4-5`) |
 | Deployed URL | ✅ **Live** — https://ttb-label-verify-production-8bcd.up.railway.app |
 
@@ -114,6 +114,21 @@ Roll-up: any `FAIL` → `FAIL`; else any `FLAG` → `FLAG`; else `PASS`.
 8. **Standard of identity** — is the class/type designation lawful at the stated ABV?
 
 ---
+
+## Batch review (`/batch`)
+
+Peak-season importers submit 200–300 labels at once. The batch screen accepts many images
+and processes them **server-side** with a bounded worker pool (6 in flight; the SDK's backoff
+handles rate limits) — a reviewer can start a run and close the tab. Each label is isolated,
+so one that fails to process returns a FLAG, not an error that sinks the run.
+
+Because a batch has no per-image application data, batch mode runs the **label-intrinsic**
+checks only — the government warning, the standard of identity, and the proof/ABV consistency
+cross-check. The results view is **exception-first**: it opens on the count needing attention,
+sorted by severity, with clean labels collapsed behind a disclosure — an agent's job is
+finding the labels that *aren't* fine, not scrolling 288 that are. Results export to **CSV**
+(verdict, failing checks, reasons, citations) — the durable record, since nothing is stored
+server-side.
 
 ## Regulatory basis
 
