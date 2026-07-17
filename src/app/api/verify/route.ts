@@ -43,6 +43,9 @@ export async function POST(request: Request) {
     brand_name: str(form.get('brand_name')),
     class_type: str(form.get('class_type')),
     alcohol_content: str(form.get('alcohol_content')),
+    net_contents: str(form.get('net_contents')),
+    producer_bottler: str(form.get('producer_bottler')),
+    country_of_origin: str(form.get('country_of_origin')),
   };
 
   const imageBase64 = Buffer.from(await file.arrayBuffer()).toString('base64');

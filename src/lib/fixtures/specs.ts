@@ -42,6 +42,11 @@ export interface LabelSpec {
   classType: string;
   abv: number | null;
   proof: number | null;
+  /** Optional; default the standard values below (so a fixture only sets what
+   *  it's testing). */
+  netContents?: string | null;
+  bottler?: string | null;
+  country?: string | null;
   warning: WarningSpec | null; // null => no warning printed
   // ---- the application it is checked against ----
   declared: ApplicationData;
@@ -61,10 +66,16 @@ const CLEAN_WARNING: WarningSpec = {
   continuous: true,
 };
 
+const DEFAULT_NET_CONTENTS = '750 mL';
+const DEFAULT_BOTTLER = "Stone's Throw Distillery, Louisville, KY";
+
 const STANDARD_APP: ApplicationData = {
   brand_name: "Stone's Throw",
   class_type: 'Kentucky Straight Bourbon Whiskey',
   alcohol_content: '45%',
+  net_contents: DEFAULT_NET_CONTENTS,
+  producer_bottler: DEFAULT_BOTTLER,
+  country_of_origin: null,
 };
 
 export const FIXTURES: LabelSpec[] = [
@@ -156,6 +167,9 @@ export function deriveExtraction(spec: LabelSpec): Extraction {
     brand_name: spec.brand,
     class_type: spec.classType,
     alcohol_content: { abv_percent: spec.abv, proof: spec.proof },
+    net_contents: spec.netContents ?? DEFAULT_NET_CONTENTS,
+    producer_bottler: spec.bottler ?? DEFAULT_BOTTLER,
+    country_of_origin: spec.country ?? null,
     government_warning: spec.warning
       ? {
           present: true,

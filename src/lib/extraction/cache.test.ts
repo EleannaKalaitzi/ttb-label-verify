@@ -8,6 +8,9 @@ const sample: Extraction = {
   brand_name: 'X',
   class_type: 'Vodka',
   alcohol_content: { abv_percent: 40, proof: null },
+  net_contents: '750 mL',
+  producer_bottler: null,
+  country_of_origin: null,
   government_warning: {
     present: true,
     text: null,

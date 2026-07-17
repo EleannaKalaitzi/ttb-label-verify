@@ -65,16 +65,25 @@ function labelSvg(spec: LabelSpec): string {
     .filter(Boolean)
     .join('   ·   ');
 
+  // undefined → default; explicit null → not printed on the label.
+  const netContents = spec.netContents === undefined ? '750 mL' : spec.netContents;
+  const bottler = spec.bottler === undefined ? "Stone's Throw Distillery, Louisville, KY" : spec.bottler;
+  const footer = [bottler ? `Bottled by ${bottler}` : null, spec.country ? `Product of ${spec.country}` : null]
+    .filter(Boolean)
+    .join('   ·   ');
+
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
   <rect width="${W}" height="${H}" fill="#fdfcf8"/>
   <rect x="14" y="14" width="${W - 28}" height="${H - 28}" fill="none" stroke="#c9a24a" stroke-width="3"/>
   <rect x="22" y="22" width="${W - 44}" height="${H - 44}" fill="none" stroke="#c9a24a" stroke-width="1"/>
-  <text x="${W / 2}" y="110" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="46" font-weight="bold" fill="#2b2b2b">${escapeXml(spec.brand)}</text>
-  <text x="${W / 2}" y="165" text-anchor="middle" font-family="Georgia, serif" font-size="22" fill="#3a3a3a">${escapeXml(spec.classType)}</text>
-  <line x1="180" y1="200" x2="${W - 180}" y2="200" stroke="#c9a24a" stroke-width="1"/>
-  <text x="${W / 2}" y="245" text-anchor="middle" font-family="Georgia, serif" font-size="22" fill="#2b2b2b">${escapeXml(abvLine || '—')}</text>
-  <line x1="40" y1="330" x2="${W - 40}" y2="330" stroke="#ddd" stroke-width="1"/>
-  ${warningSvg(spec, 375)}
+  <text x="${W / 2}" y="105" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="46" font-weight="bold" fill="#2b2b2b">${escapeXml(spec.brand)}</text>
+  <text x="${W / 2}" y="158" text-anchor="middle" font-family="Georgia, serif" font-size="22" fill="#3a3a3a">${escapeXml(spec.classType)}</text>
+  <line x1="180" y1="190" x2="${W - 180}" y2="190" stroke="#c9a24a" stroke-width="1"/>
+  <text x="${W / 2}" y="232" text-anchor="middle" font-family="Georgia, serif" font-size="22" fill="#2b2b2b">${escapeXml(abvLine || '—')}</text>
+  ${netContents ? `<text x="${W / 2}" y="266" text-anchor="middle" font-family="Georgia, serif" font-size="18" fill="#3a3a3a">${escapeXml(netContents)}</text>` : ''}
+  <line x1="40" y1="320" x2="${W - 40}" y2="320" stroke="#ddd" stroke-width="1"/>
+  ${warningSvg(spec, 360)}
+  ${footer ? `<text x="${W / 2}" y="558" text-anchor="middle" font-family="Arial" font-size="12" fill="#666">${escapeXml(footer)}</text>` : ''}
 </svg>`;
 }
 

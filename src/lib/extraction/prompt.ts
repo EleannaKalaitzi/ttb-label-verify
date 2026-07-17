@@ -19,7 +19,7 @@ export const REQUIRED_WARNING_TEXT =
 
 /** Prompt version — bump on any change to SYSTEM_PROMPT. Part of the cache key
  *  so a prompt change invalidates cached extractions automatically. */
-export const PROMPT_VERSION = 'v1';
+export const PROMPT_VERSION = 'v2';
 
 export const SYSTEM_PROMPT = `You are a transcription tool for a compliance reviewer at the U.S. Alcohol and Tobacco Tax and Trade Bureau (TTB). You examine a photograph of a distilled-spirits label and report EXACTLY what is printed on it.
 
@@ -32,7 +32,10 @@ Extract these fields:
 3. alcohol_content:
    - abv_percent: the alcohol-by-volume figure as a number (45 for "45% Alc./Vol."). Report the number only.
    - proof: the proof figure as a number if a proof statement is printed (90 for "90 Proof").
-4. government_warning — the mandated health warning. It usually begins "GOVERNMENT WARNING":
+4. net_contents — the net contents exactly as printed (e.g. "750 mL", "1 L", "50 mL").
+5. producer_bottler — the name and address of the bottler or producer. Report the entity and its location WITHOUT the lead-in words ("Bottled by", "Produced by", "Distilled by") — e.g. for "Bottled by Stone's Throw Distillery, Louisville, KY" report "Stone's Throw Distillery, Louisville, KY".
+6. country_of_origin — for imported products, the country of origin exactly as printed (e.g. "Product of Scotland", "Scotland"). Return null if no country of origin appears (e.g. a domestic product).
+7. government_warning — the mandated health warning. It usually begins "GOVERNMENT WARNING":
    - present: whether any government warning statement appears.
    - text: the FULL warning, transcribed character-for-character exactly as printed — original capitalization, punctuation, and spacing. Do not correct, normalize, or complete it. If words are cut off or illegible, transcribe only what is legible.
    - first_two_words_all_caps: whether the first two words ("GOVERNMENT WARNING") appear in ALL CAPITAL letters.

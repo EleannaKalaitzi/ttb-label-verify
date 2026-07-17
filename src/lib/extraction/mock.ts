@@ -20,6 +20,9 @@ const DEFAULT_CLEAN: Extraction = {
   brand_name: "STONE'S THROW",
   class_type: 'Kentucky Straight Bourbon Whiskey',
   alcohol_content: { abv_percent: 45, proof: 90 },
+  net_contents: '750 mL',
+  producer_bottler: "Stone's Throw Distillery, Louisville, KY",
+  country_of_origin: null,
   government_warning: {
     present: true,
     text: REQUIRED_WARNING_TEXT,

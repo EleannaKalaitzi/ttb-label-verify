@@ -4,6 +4,9 @@ import { rollup } from '../verdict/types';
 import { compareBrand } from '../compare/brand';
 import { compareClassType } from '../compare/classtype';
 import { compareAbv, crossCheckProof } from '../compare/abv';
+import { compareNetContents } from '../compare/net-contents';
+import { compareBottler } from '../compare/bottler';
+import { compareCountry } from '../compare/country';
 import { checkWarning } from '../rules/warning';
 import { checkStandardOfIdentity } from '../rules/standards-of-identity';
 
@@ -11,13 +14,16 @@ import { checkStandardOfIdentity } from '../rules/standards-of-identity';
  * The declared values from a compliance application — what the label is
  * asserted to say. In this prototype these come from the reviewer (typed in or
  * a simulated COLA payload); COLA integration is out of scope.
- * Net contents / bottler / country of origin are deliberately out of scope.
  */
 export interface ApplicationData {
   brand_name: string | null;
   class_type: string | null;
   /** Declared ABV; accepts a number or a string like "45%". */
   alcohol_content: string | number | null;
+  net_contents: string | null;
+  producer_bottler: string | null;
+  /** Declared country of origin; null/empty for a domestic product. */
+  country_of_origin: string | null;
 }
 
 export interface VerificationResult {
@@ -65,6 +71,10 @@ export function verify(
     extraction.alcohol_content.proof,
   );
   if (proofCheck) verdicts.push(proofCheck);
+
+  verdicts.push(compareNetContents(declared.net_contents, extraction.net_contents));
+  verdicts.push(compareBottler(declared.producer_bottler, extraction.producer_bottler));
+  verdicts.push(compareCountry(declared.country_of_origin, extraction.country_of_origin));
 
   // Against the regulations.
   verdicts.push(...checkWarning(extraction.government_warning));

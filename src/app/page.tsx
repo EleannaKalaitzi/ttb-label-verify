@@ -25,6 +25,9 @@ export default function Home() {
   const [brand, setBrand] = useState('');
   const [classType, setClassType] = useState('');
   const [abv, setAbv] = useState('');
+  const [netContents, setNetContents] = useState('');
+  const [bottler, setBottler] = useState('');
+  const [country, setCountry] = useState('');
   const [loading, setLoading] = useState(false);
   const [dragging, setDragging] = useState(false);
   const [result, setResult] = useState<VerifyResponse | null>(null);
@@ -62,6 +65,9 @@ export default function Home() {
       body.set('brand_name', brand);
       body.set('class_type', classType);
       body.set('alcohol_content', abv);
+      body.set('net_contents', netContents);
+      body.set('producer_bottler', bottler);
+      body.set('country_of_origin', country);
       const res = await fetch('/api/verify', { method: 'POST', body });
       const data = await res.json();
       if (!res.ok) setError(data.error ?? 'Something went wrong checking the label.');
@@ -142,6 +148,21 @@ export default function Home() {
             <label htmlFor="abv" className={styles.rowLabel}>Alcohol content</label>
             <input id="abv" className={styles.blank} value={abv}
               onChange={(e) => setAbv(e.target.value)} placeholder="45%" inputMode="decimal" />
+          </div>
+          <div className={styles.row}>
+            <label htmlFor="netContents" className={styles.rowLabel}>Net contents</label>
+            <input id="netContents" className={styles.blank} value={netContents}
+              onChange={(e) => setNetContents(e.target.value)} placeholder="750 mL" />
+          </div>
+          <div className={styles.row}>
+            <label htmlFor="bottler" className={styles.rowLabel}>Producer / bottler</label>
+            <input id="bottler" className={styles.blank} value={bottler}
+              onChange={(e) => setBottler(e.target.value)} placeholder="Stone's Throw Distillery, Louisville, KY" />
+          </div>
+          <div className={styles.row}>
+            <label htmlFor="country" className={styles.rowLabel}>Country of origin</label>
+            <input id="country" className={styles.blank} value={country}
+              onChange={(e) => setCountry(e.target.value)} placeholder="(imports only)" />
           </div>
         </div>
 

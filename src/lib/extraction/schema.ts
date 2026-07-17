@@ -55,6 +55,15 @@ export const ExtractionSchema = z.object({
    *  Bourbon Whiskey". null if illegible. */
   class_type: z.string().nullable(),
   alcohol_content: AlcoholContent,
+  /** Net contents exactly as printed, e.g. "750 mL". null if illegible. */
+  net_contents: z.string().nullable(),
+  /** The bottler/producer name and address (the entity, without the "Bottled
+   *  by"/"Produced by" lead-in), e.g. "Stone's Throw Distillery, Louisville, KY".
+   *  null if illegible. */
+  producer_bottler: z.string().nullable(),
+  /** Country of origin exactly as printed for imports, e.g. "Product of
+   *  Scotland" or "Scotland". null if none is shown (e.g. a domestic product). */
+  country_of_origin: z.string().nullable(),
   government_warning: GovernmentWarning,
 });
 

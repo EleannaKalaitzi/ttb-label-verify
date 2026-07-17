@@ -103,10 +103,15 @@ Roll-up: any `FAIL` → `FAIL`; else any `FLAG` → `FLAG`; else `PASS`.
 3. **Alcohol content** — parsed numerically (`45%`, `45.0%`, `45% Alc./Vol.` are equal).
    Where proof is also printed, it is cross-checked against the ABV (proof ≈ 2 × ABV) — an
    internal inconsistency is a finding regardless of the application.
+4. **Net contents** — parsed to millilitres, so `750 mL` = `0.75 L`; a real volume
+   difference fails.
+5. **Producer / bottler** — name & address, cautious text match (cosmetic differences pass).
+6. **Country of origin** — cautious match; a domestic product (none declared, none shown) is
+   a PASS, not a gap; lead-ins like "Product of" are ignored.
 
 **Against the regulations**
-4. **Government health warning** — three separate checks, three citations (below).
-5. **Standard of identity** — is the class/type designation lawful at the stated ABV?
+7. **Government health warning** — three separate checks, three citations (below).
+8. **Standard of identity** — is the class/type designation lawful at the stated ABV?
 
 ---
 
@@ -201,11 +206,10 @@ Accuracy will be **reported, not claimed**:
 
 ## Out of scope (with rationale)
 
-COLA integration · authentication · persistence/database · net contents · bottler
-name/address · country of origin · image preprocessing (deskew/glare) · type-size measurement
-· live regulatory fetching · wine and malt beverages · full Subpart I rule engine. Distilled
-spirits only. This is a standalone proof-of-concept; depth on the core checks was chosen over
-breadth.
+COLA integration · authentication · persistence/database · image preprocessing (deskew/glare)
+· type-size measurement · live regulatory fetching · wine and malt beverages · full Subpart I
+rule engine. Distilled spirits only. This is a standalone proof-of-concept; depth on the core
+checks was chosen over breadth.
 
 ---
 
