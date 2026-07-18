@@ -139,11 +139,16 @@ an error that sinks the run.
 Because a batch has no per-image application data, batch mode runs the **label-intrinsic**
 checks only — the government warning, the standard of identity, and the proof/ABV consistency
 cross-check. The results view is **exception-first**: it opens on the count needing attention,
-sorted by severity, with clean labels collapsed behind a disclosure — an agent's job is
-finding the labels that *aren't* fine, not scrolling 288 that are. A batch run exports to **CSV**
-(verdict, failing checks, reasons, citations), and a **single-label** result exports the same way
-(one row per check, with the application value, the label value, the reason, and citation). The
-export is the durable record, since nothing is stored server-side.
+sorted by severity, with clean labels collapsed behind a disclosure (each **expandable to show
+*why* it passed**) — an agent's job is finding the labels that *aren't* fine, not scrolling 288
+that are. A **thumbnail** sits beside each finding; clicking it (or **Expand**) opens an **in-page
+window** with the enlarged label and its full findings. A **"Load sample labels"** button runs a
+batch over a bundled set of real label photos, so the results view can be seen with no upload.
+
+A batch run exports to **CSV** (verdict, failing checks, reasons, citations), and a
+**single-label** result exports the same way (one row per check, with the application value, the
+label value, the reason, and citation). The export is the durable record, since nothing is stored
+server-side.
 
 ## Regulatory basis
 
@@ -213,7 +218,10 @@ A hard requirement, not polish: under the Rehabilitation Act § 508 (the 2017 Re
 incorporates WCAG 2.0 AA by reference), a tool that cannot meet it cannot be procured,
 irrespective of function. The UI is built to this standard from the first
 line — verdicts conveyed by colour **and** icon **and** text, ≥ 4.5:1 contrast, full keyboard
-navigation, `aria-live` announcements, 200% text scaling, and plain-language copy.
+navigation, `aria-live` announcements, 200% text scaling, and plain-language copy. Reading text
+is a legible sans at a generous base size with **≥ 44 px** targets — a stakeholder noted roughly
+half the review team is over 50, with a wide range of tech-comfort — while the monospace "dossier"
+styling is kept as an accent, not the reading font.
 
 ---
 
