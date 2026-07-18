@@ -25,12 +25,12 @@ Upload a sample label from [`images/`](images/) to try it.
 | Area | State |
 |---|---|
 | Extraction engine (image → structured data) | ✅ Implemented (Claude Haiku vision + mock mode) |
-| Compliance decision engine — all 7 fields + citations | ✅ Implemented, 91 unit tests passing |
+| Compliance decision engine — all 7 fields + citations | ✅ Implemented, 115 unit tests passing |
 | Content-hash result cache | ✅ Implemented |
 | Single-label UI (508 / WCAG AA) | ✅ Implemented |
 | Server-side batch + CSV export | ✅ Implemented (`/batch`, exception-first view) |
 | Measurement harness (sensitivity/specificity) | ✅ Implemented (`npm run measure`) |
-| Measured latency figure | ✅ **p50 ≈ 2.9 s** (live `claude-haiku-4-5`; tail varies — see Measurement) |
+| Measured latency figure | ✅ **p50 ≈ 2.6 s** (live `claude-haiku-4-5`; tail varies — see Measurement) |
 | Deployed URL | ✅ **Live** — https://ttb-label-verify-production-8bcd.up.railway.app |
 
 Every figure above is **measured, not asserted** — see [Measurement](#measurement-measured-live).
@@ -49,7 +49,7 @@ npm install
 npm run demo          # prints verdicts for several example labels
 npm run spike:mock    # runs one extraction through the pipeline + latency
 
-# 2. Run the test suite (90 tests, no key needed):
+# 2. Run the test suite (115 tests, no key needed):
 npm test
 
 # ...and the measurement harness (no key = engine baseline; with a key = live accuracy):
@@ -117,10 +117,12 @@ Roll-up: any `FAIL` → `FAIL`; else any `FLAG` → `FLAG`; else `PASS`.
 
 **Against the regulations**
 7. **Government health warning** — three separate checks, three citations (below).
-8. **Standard of identity** — is the class/type designation lawful at the stated ABV?
-   Authoritative for **distilled spirits** (27 CFR Part 5); for wine (Part 4) and malt
-   beverages (Part 7) it honestly reports *"not evaluated"* with a pointer to the governing
-   part, rather than guessing.
+8. **Standard of identity** — is the class/type designation lawful for what the label states?
+   Evaluated for **all three beverage classes**, each by the mechanism its Part defines:
+   distilled spirits by minimum bottling strength (27 CFR Part 5), wine by class ABV ranges and
+   the 7–24% scope envelope (Part 4), and malt beverages by class/type designation recognition
+   (Part 7, which sets no numeric ABV standard). A designation outside every encoded rule is
+   flagged for a reviewer, never guessed.
 
 ---
 
@@ -141,11 +143,12 @@ server-side.
 
 ## Regulatory basis
 
-All citations were verified against the current CFR text (Cornell LII / eCFR) on
-**2026-07-16**. Rules are versioned data pinned to that date — there is no live regulatory
-fetch on the request path (the agency firewall blocks it, the latency budget forbids it, and
-these rules change on a timescale of decades). A staleness check against the eCFR API is
-*designed* as an out-of-band job and deliberately left unbuilt.
+Every rule is **offline data verified against a pinned CFR source committed in the repo**
+([`src/lib/rules/sources/`](src/lib/rules/sources/)) — the verbatim eCFR text for Parts 4, 5, 7,
+and 16, each with its "up to date as of" date and a rule↔source mapping (verified 2026-07-15 to
+2026-07-17). There is no live regulatory fetch on the request path (the agency firewall blocks
+it, the latency budget forbids it, and these rules change on a timescale of decades). A staleness
+check against the eCFR API is *designed* as an out-of-band job and deliberately left unbuilt.
 
 ### Government warning — 27 CFR Part 16 (Alcoholic Beverage Labeling Act of 1988)
 
@@ -170,17 +173,33 @@ so a title-case "Government Warning" is a hard `FAIL`. Whether text *is bold* is
 visual judgment, not a measurement — so a bold-rule issue yields `FLAG` (with the citation
 shown) rather than `FAIL`. The tool does not overstate its own confidence.
 
-### Standards of identity — 27 CFR Part 5, Subpart I
+### Standards of identity — spirits (Part 5), wine (Part 4), malt (Part 7)
 
 Class and type designations are legally defined, not free text — so a label can be
 non-compliant even when it matches its application perfectly. "Kentucky Straight Bourbon
 Whiskey" at 38% ABV is non-compliant on its face, because that designation carries a minimum
 bottling strength of 40% ABV (80 proof).
 
-This is deliberately a small, static table (~14 designations) carrying the one rule checkable
-from label text alone — minimum bottling strength — with a per-class citation
-(§ 5.142–5.148). It is **not** a rule engine; anything outside the table returns *"not
-evaluated"*, an honest gap rather than a guessed verdict.
+Each beverage class is evaluated by the mechanism its Part actually defines — data-as-code,
+every entry carrying its citation and verified against the pinned source:
+
+- **Distilled spirits (Part 5, Subpart I).** Minimum bottling strength per class (§ 5.142–5.148,
+  40%), plus the classes that carry *different* rules: flavored spirits (§ 5.151, 30%), cordials
+  & liqueurs (§ 5.150 — no general floor; rock-and-rye 24%, spirit-liqueur 30%), imitations
+  (§ 5.152), and specialty products (§ 5.156). Those are checked first, so a "Cherry Flavored
+  Bourbon Whisky" (30% floor) or a "Sloe Gin" (a liqueur, no floor) is **not** falsely failed
+  against whisky's/gin's 40%.
+- **Wine (Part 4).** Per-type ABV ranges (§ 4.21 — table ≤ 14%, dessert 14–24%, sherry ≥ 17%,
+  port ≥ 18%, aperitif/vermouth ≥ 15%) plus the 7–24% scope envelope (§ 4.6/4.7): below 7% flags
+  as an FDA-regulated product, above 24% fails as a spirit. Non-grape wines (cider, perry, sake,
+  mead) are included.
+- **Malt beverages (Part 7).** Part 7 sets no numeric ABV standard, so the check is class/type
+  **designation recognition** (§ 7.63): a recognized designation (ale, lager, stout, IPA…)
+  passes; an unrecognized one flags for a statement-of-composition review.
+
+These are deliberately small, static tables — **not** a rule engine, and not an attempt to
+implement each Subpart in full. A designation outside every encoded rule is flagged for review
+(e.g. a distilled-spirits specialty product, § 5.156) — an honest gap, never a guessed verdict.
 
 ---
 
@@ -201,16 +220,16 @@ via `npm run measure`. The harness scores the full pipeline (model reads image �
 decides) against each fixture's known verdict; ground truth per check is the verdict on a
 *perfect* read, so any discrepancy isolates an error the **vision step** introduced.
 
-**Results (9-label corpus, live model):**
+**Results (live model `claude-haiku-4-5`, full 11-label corpus — spirits, wine & malt):**
 
 | Metric | Value |
 |---|---|
-| Overall verdict accuracy | **9 / 9** |
+| Overall verdict accuracy | **11 / 11** (no off-diagonal) |
 | Per-check sensitivity & specificity | **100%** across all checks |
-| Latency | **p50 ≈ 2.9 s** — within the "about 5 seconds" target |
-| Confusion | PASS→PASS ×1 · FLAG→FLAG ×3 · FAIL→FAIL ×5 (no off-diagonal) |
+| Latency | **p50 ≈ 2.6 s · max ≈ 4.0 s** — within the "about 5 seconds" target |
+| Confusion | PASS→PASS ×3 · FLAG→FLAG ×2 · FAIL→FAIL ×6 |
 
-> **Latency, disclosed honestly.** The *median* is ~2.9 s and meets the stated "about 5
+> **Latency, disclosed honestly.** The *median* is ~2.6 s and meets the stated "about 5
 > seconds" adoption bar. But **latency scales with image size**, and images are sent at full
 > fidelity (a deliberate choice — no downscaling, to avoid altering the reviewer's input), so
 > a large photograph can take longer and individual calls occasionally exceed 5 s (up to
@@ -239,7 +258,9 @@ decides) against each fixture's known verdict; ground truth per check is the ver
   these cannot be measured from an uncalibrated photograph (no reference scale). Not attempted.
 - **Bold detection is advisory** — the regulation is exact; the model's perception of it is
   not. Bold-rule issues are `FLAG`, not `FAIL`.
-- **Designations outside the table are not evaluated** — an honest gap, not an inferred verdict.
+- **Designations outside the encoded rules are flagged, not guessed** — a niche spirit with no
+  numeric standard is reported as a specialty product (§ 5.156) for review; compositional
+  standards not visible on a label (mash bill, appellation, volatile acidity) are out of scope.
 - **Single image per application** — real COLAs have front and back labels, and the warning
   usually lives on the back; single-image is a known modelling gap.
 - **Network dependency** — the vision model is a network call. The agency firewall blocks
@@ -251,12 +272,13 @@ decides) against each fixture's known verdict; ground truth per check is the ver
 ## Out of scope (with rationale)
 
 COLA integration · authentication · persistence/database · image preprocessing (deskew/glare)
-· image downscaling · type-size measurement · live regulatory fetching · full standards of
-identity for wine (Part 4) and malt beverages (Part 7). **All beverage types are accepted** and
-checked on the universal requirements (warning, brand, class/type, ABV, net contents, bottler,
-country); the deep standard-of-identity check is implemented for distilled spirits, with
-wine/malt honestly reported as *"not evaluated"* rather than guessed. This is a standalone
-proof-of-concept; depth on the core checks was chosen over breadth.
+· image downscaling · type-size measurement · live regulatory fetching · **compositional**
+standards of identity not determinable from a label (mash bill, distillation proof, cellar
+treatment, grape-variety percentages, appellations of origin). All three beverage classes are
+evaluated on the label-checkable standard of identity (see above) plus the universal
+requirements (warning, brand, class/type, ABV, net contents, bottler, country). This is a
+standalone proof-of-concept; depth and honesty on the checkable rules was chosen over attempting
+the full Subparts.
 
 ---
 
