@@ -12,7 +12,7 @@ const mono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: 'TTB Label Verification',
+  title: 'Label Verification System',
   description:
     'Verify an alcohol beverage label against its application and the federal labeling regulations.',
 };
