@@ -1,8 +1,32 @@
 import { createHash } from 'node:crypto';
+import { readdirSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import type { ExtractionProvider, ExtractionInput, ExtractionResult } from './provider';
 import type { Extraction } from './schema';
 import { REQUIRED_WARNING_TEXT } from './prompt';
 import { FIXTURE_EXTRACTIONS } from './fixtures.generated';
+import { SAMPLE_EXTRACTIONS } from '../samples/labels';
+
+// Real sample photos (public/samples/) mapped by content hash to their authored
+// read, built lazily on first use so mock mode returns the right verdict for the
+// sample batch without any generation step.
+let sampleHashes: Record<string, Extraction> | null = null;
+function sampleByHash(): Record<string, Extraction> {
+  if (sampleHashes) return sampleHashes;
+  sampleHashes = {};
+  try {
+    const dir = join(process.cwd(), 'public', 'samples');
+    for (const name of readdirSync(dir)) {
+      const ext = SAMPLE_EXTRACTIONS[name];
+      if (!ext) continue;
+      const hash = createHash('sha256').update(readFileSync(join(dir, name))).digest('hex');
+      sampleHashes[hash] = ext;
+    }
+  } catch {
+    /* directory may be absent in some environments — fall through to default */
+  }
+  return sampleHashes;
+}
 
 /**
  * Canned extraction served when MOCK_EXTRACTION=1 — no network, no API key.
@@ -41,7 +65,7 @@ export class MockProvider implements ExtractionProvider {
     await new Promise((r) => setTimeout(r, 40));
 
     const hash = createHash('sha256').update(Buffer.from(input.imageBase64, 'base64')).digest('hex');
-    const data = FIXTURE_EXTRACTIONS[hash] ?? DEFAULT_CLEAN;
+    const data = FIXTURE_EXTRACTIONS[hash] ?? sampleByHash()[hash] ?? DEFAULT_CLEAN;
 
     return {
       data,

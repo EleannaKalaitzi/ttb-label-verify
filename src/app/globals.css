@@ -1,17 +1,28 @@
 /*
- * "Technical dossier" theme — a typewritten compliance worksheet.
- * Cream paper, black ink, monospace throughout. One fixed high-contrast theme
- * (verdict colours are WCAG-AA verified on the cream background).
+ * "Technical dossier" theme — a typewritten compliance worksheet, tuned for
+ * legibility. Cream paper, black ink, one fixed high-contrast theme (verdict
+ * colours are WCAG-AA verified on the cream background).
+ *
+ * Type strategy (for an audience that is half over 50, low tech-comfort):
+ *   • Monospace (var(--mono)) carries the DOSSIER CHARACTER — headings, data
+ *     values, verdict tags, citations, buttons.
+ *   • A legible system SANS (var(--font-sans)) carries the text people READ —
+ *     field labels, verdict reasons, summaries.
+ *   • Base 16.5px with generous line-height; nothing critical below ~13px.
  */
 :root {
   --paper: #f4edda; /* cream */
   --paper-2: #efe6cf; /* slightly deeper cream for insets */
   --ink: #17130c; /* near-black on cream ≈ 15:1 */
-  --ink-soft: #5a5138; /* muted ink on cream ≈ 6:1 */
+  --ink-soft: #554c34; /* muted ink on cream ≈ 6.5:1 (AA for body) */
   --rule: #cdbf9a; /* hairline rules (aged) */
   --rule-strong: #8a7c58;
 
   --accent: #6b4f1d; /* sepia accent for links */
+
+  /* Fonts. --font-mono is the bundled JetBrains Mono (see layout.tsx). */
+  --mono: var(--font-mono), ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace;
+  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 
   /* Verdict colours — high contrast on cream; text stays near-black, colour
      carries only on the status symbol/tag (paired with an icon and a word). */
@@ -35,8 +46,8 @@ body {
   min-height: 100dvh;
   color: var(--ink);
   background: var(--paper);
-  font-family: var(--font-mono), ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace;
-  font-size: 15px;
+  font-family: var(--font-sans);
+  font-size: 16.5px;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;

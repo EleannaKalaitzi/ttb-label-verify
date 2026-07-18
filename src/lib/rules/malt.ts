@@ -65,7 +65,8 @@ const MALT_DESIGNATIONS: MaltDesignation[] = [
 function matchMaltDesignation(classType: string): MaltDesignation | null {
   const text = ` ${normalize(classType)} `;
   for (const d of MALT_DESIGNATIONS) {
-    if (d.keywords.every((k) => text.includes(` ${k} `) || text.includes(` ${k}`) || text.includes(`${k} `))) {
+    // Whole-word match only (space-padded) — no partial-word false hits.
+    if (d.keywords.every((k) => text.includes(` ${k} `))) {
       return d;
     }
   }

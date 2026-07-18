@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import type { FieldVerdict, Verdict } from '@/lib/verdict/types';
 import styles from './batch.module.css';
@@ -33,7 +33,37 @@ export default function Batch() {
   const [job, setJob] = useState<BatchJob | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
+  const [sampleMode, setSampleMode] = useState(false);
+  const [previews, setPreviews] = useState<Map<string, string>>(new Map());
+  const [expanded, setExpanded] = useState<BatchItem | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const dialogRef = useRef<HTMLDialogElement>(null);
+
+  // Drive the native <dialog> from state so it gets Escape-to-close, a backdrop,
+  // and focus handling for free.
+  useEffect(() => {
+    const d = dialogRef.current;
+    if (!d) return;
+    if (expanded && !d.open) d.showModal();
+    else if (!expanded && d.open) d.close();
+  }, [expanded]);
+
+  // Object URLs for uploaded files, so each finding can show a thumbnail without
+  // the image ever being sent back or stored server-side. Revoked on change.
+  useEffect(() => {
+    const m = new Map<string, string>();
+    for (const f of files) m.set(f.name, URL.createObjectURL(f));
+    setPreviews(m);
+    return () => {
+      for (const url of m.values()) URL.revokeObjectURL(url);
+    };
+  }, [files]);
+
+  // Sample labels are static files in public/samples; uploaded labels use their
+  // local object URL (never sent back to the server).
+  function thumbSrc(filename: string): string | undefined {
+    return sampleMode ? `/samples/${encodeURIComponent(filename)}` : previews.get(filename);
+  }
 
   function addFiles(list: FileList | null) {
     if (!list) return;
@@ -48,6 +78,7 @@ export default function Batch() {
     }
     setError(null);
     setJob(null);
+    setSampleMode(false);
     const body = new FormData();
     for (const f of files) body.append('images', f);
     try {
@@ -55,6 +86,23 @@ export default function Batch() {
       const data = await res.json();
       if (!res.ok) {
         setError(data.error ?? 'Could not start the batch.');
+        return;
+      }
+      poll(data.jobId as string);
+    } catch {
+      setError('Could not reach the server. Please try again.');
+    }
+  }
+
+  async function loadSample() {
+    setError(null);
+    setJob(null);
+    setSampleMode(true);
+    try {
+      const res = await fetch('/api/batch/sample', { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error ?? 'Could not load the sample labels.');
         return;
       }
       poll(data.jobId as string);
@@ -85,16 +133,23 @@ export default function Batch() {
         .sort((a, b) => SEVERITY[a.overall ?? 'FLAG'] - SEVERITY[b.overall ?? 'FLAG'])
     : [];
   const passItems = job ? job.items.filter((i) => i.overall === 'PASS') : [];
+  const expandedSrc = expanded ? thumbSrc(expanded.filename) : undefined;
 
   return (
     <div className={styles.sheet}>
       <header className={styles.docHead}>
-        <p className={styles.kicker}>Official prototype · TTB Compliance Division</p>
-        <h1 className={styles.docTitle}>Batch Label Review</h1>
-        <p className={styles.docMeta}>
-          High-volume screening · self-compliance checks (warning &amp; standard of identity) ·{' '}
-          <Link href="/">single-label review →</Link>
-        </p>
+        <div className={styles.headRow}>
+          <div>
+            <p className={styles.kicker}>Official prototype · TTB Compliance Division</p>
+            <h1 className={styles.docTitle}>Batch Label Review</h1>
+          </div>
+          <Link href="/" className={styles.navBtn}>
+            <span className={styles.navIcon} aria-hidden="true">▭</span>
+            <span>Single label</span>
+            <span aria-hidden="true">→</span>
+          </Link>
+        </div>
+        <p className={styles.docMeta}>Alcohol beverages</p>
         <hr className={styles.ruleDouble} />
       </header>
 
@@ -125,7 +180,18 @@ export default function Batch() {
           <button type="submit" className={styles.submit} disabled={job?.status === 'running'}>
             {job?.status === 'running' ? 'Screening…' : 'Screen batch'}
           </button>
+          <button
+            type="button"
+            className={styles.sampleBtn}
+            onClick={loadSample}
+            disabled={job?.status === 'running'}
+          >
+            <span className={styles.sampleIcon} aria-hidden="true">▤</span> Load sample labels
+          </button>
         </div>
+        <p className={styles.sampleHint}>
+          No labels handy? Load the built-in sample set to see the results view instantly.
+        </p>
         {error && <p role="alert" className={styles.error}>{error}</p>}
       </form>
 
@@ -134,7 +200,7 @@ export default function Batch() {
           <span className={styles.secNo}>§ 2</span> Findings
         </h2>
 
-        {!job && <p className={styles.empty}>— Upload labels and select “Screen batch”.</p>}
+        {!job && <p className={styles.empty}>— Upload labels and screen, or load the sample set above.</p>}
 
         {job && (
           <>
@@ -161,50 +227,127 @@ export default function Batch() {
             )}
 
             <ol className={styles.itemList}>
-              {attention.map((item) => (
-                <li key={item.index} className={styles.item}>
-                  <div className={styles.itemHead}>
-                    <span className={`${styles.sym} ${VERDICT[item.overall ?? 'FLAG'].cls}`} aria-hidden="true">
-                      {VERDICT[item.overall ?? 'FLAG'].icon}
-                    </span>
-                    <span className={styles.filename}>{item.filename}</span>
-                    <span className={`${styles.tag} ${VERDICT[item.overall ?? 'FLAG'].cls}`}>
-                      {VERDICT[item.overall ?? 'FLAG'].word}
-                    </span>
-                  </div>
-                  <ul className={styles.reasons}>
-                    {item.verdicts
-                      .filter((v) => v.verdict !== 'PASS')
-                      .map((v) => (
-                        <li key={v.check}>
-                          <b>{v.label}:</b> {v.reason}{' '}
-                          {v.citation && (
-                            <a href={v.citation.authority} target="_blank" rel="noopener noreferrer">
-                              {v.citation.section} ↗
-                            </a>
-                          )}
-                        </li>
-                      ))}
-                  </ul>
-                </li>
-              ))}
+              {attention.map((item) => {
+                const src = thumbSrc(item.filename);
+                return (
+                  <li key={item.index} className={styles.item}>
+                    {src ? (
+                      <button type="button" className={styles.thumbBtn} onClick={() => setExpanded(item)} title="Expand this label">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img className={styles.thumb} src={src} alt={`Label image: ${item.filename}`} />
+                      </button>
+                    ) : (
+                      <div className={styles.thumbEmpty} aria-hidden="true">no image</div>
+                    )}
+                    <div className={styles.itemBody}>
+                      <div className={styles.itemHead}>
+                        <span className={`${styles.sym} ${VERDICT[item.overall ?? 'FLAG'].cls}`} aria-hidden="true">
+                          {VERDICT[item.overall ?? 'FLAG'].icon}
+                        </span>
+                        <span className={styles.filename}>{item.filename}</span>
+                        <span className={`${styles.tag} ${VERDICT[item.overall ?? 'FLAG'].cls}`}>
+                          {VERDICT[item.overall ?? 'FLAG'].word}
+                        </span>
+                        <button type="button" className={styles.expandBtn} onClick={() => setExpanded(item)}>
+                          <span aria-hidden="true">⤢</span> Expand
+                        </button>
+                      </div>
+                      <ul className={styles.reasons}>
+                        {item.verdicts
+                          .filter((v) => v.verdict !== 'PASS')
+                          .map((v) => (
+                            <li key={v.check}>
+                              <b>{v.label}:</b> {v.reason}{' '}
+                              {v.citation && (
+                                <a href={v.citation.authority} target="_blank" rel="noopener noreferrer">
+                                  {v.citation.section} ↗
+                                </a>
+                              )}
+                            </li>
+                          ))}
+                      </ul>
+                    </div>
+                  </li>
+                );
+              })}
             </ol>
 
             {passItems.length > 0 && (
               <details className={styles.passDisclosure}>
-                <summary>{passItems.length} clean label(s) — compliant, collapsed</summary>
+                <summary>{passItems.length} clean label(s) — compliant. Expand any to see why.</summary>
                 <ul className={styles.passList}>
-                  {passItems.map((i) => (
-                    <li key={i.index}>
-                      <span className={`${styles.sym} ${styles.pass}`} aria-hidden="true">✓</span> {i.filename}
-                    </li>
-                  ))}
+                  {passItems.map((item) => {
+                    const src = thumbSrc(item.filename);
+                    return (
+                      <li key={item.index} className={styles.passItem}>
+                        {src ? (
+                          <button type="button" className={styles.passThumbBtn} onClick={() => setExpanded(item)} title="Expand this label">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img className={styles.passThumb} src={src} alt={`Label image: ${item.filename}`} />
+                          </button>
+                        ) : (
+                          <span className={`${styles.sym} ${styles.pass}`} aria-hidden="true">✓</span>
+                        )}
+                        <span className={styles.passName}>{item.filename}</span>
+                        <button type="button" className={styles.expandBtn} onClick={() => setExpanded(item)}>
+                          <span aria-hidden="true">⤢</span> Why it passed
+                        </button>
+                      </li>
+                    );
+                  })}
                 </ul>
               </details>
             )}
           </>
         )}
       </section>
+
+      <dialog
+        ref={dialogRef}
+        className={styles.modal}
+        onClose={() => setExpanded(null)}
+        onClick={(e) => {
+          if (e.target === dialogRef.current) setExpanded(null);
+        }}
+      >
+        {expanded && (
+          <div className={styles.modalInner}>
+            <div className={styles.modalHead}>
+              <span className={`${styles.sym} ${VERDICT[expanded.overall ?? 'FLAG'].cls}`} aria-hidden="true">
+                {VERDICT[expanded.overall ?? 'FLAG'].icon}
+              </span>
+              <span className={styles.modalTitle}>{expanded.filename}</span>
+              <span className={`${styles.tag} ${VERDICT[expanded.overall ?? 'FLAG'].cls}`}>
+                {VERDICT[expanded.overall ?? 'FLAG'].word}
+              </span>
+              <button type="button" className={styles.modalClose} onClick={() => setExpanded(null)} aria-label="Close">
+                ✕
+              </button>
+            </div>
+            {expandedSrc && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img className={styles.modalImg} src={expandedSrc} alt={`Label image: ${expanded.filename}`} />
+            )}
+            <ul className={styles.modalFindings}>
+              {expanded.verdicts.map((v) => (
+                <li key={v.check} className={styles.modalFinding}>
+                  <span className={`${styles.sym} ${VERDICT[v.verdict].cls}`} aria-hidden="true">
+                    {VERDICT[v.verdict].icon}
+                  </span>
+                  <div>
+                    <b>{v.label}</b> — {v.reason}{' '}
+                    {v.citation && (
+                      <a href={v.citation.authority} target="_blank" rel="noopener noreferrer">
+                        {v.citation.section} ↗
+                      </a>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </dialog>
     </div>
   );
 }
