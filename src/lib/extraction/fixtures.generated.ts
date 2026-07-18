@@ -174,5 +174,43 @@ export const FIXTURE_EXTRACTIONS: Record<string, Extraction> = {
       "remainder_bold": false,
       "is_continuous": true
     }
+  },
+  "2144222d5cb4897983848ebc36cfefee30f9d94ab85a26b3fc58ef7ac615da16": {
+    "brand_name": "OAKMONT RIDGE",
+    "class_type": "Table Wine",
+    "alcohol_content": {
+      "abv_percent": 16,
+      "proof": null
+    },
+    "net_contents": "750 mL",
+    "producer_bottler": "Oakmont Ridge Cellars, Sonoma, CA",
+    "country_of_origin": null,
+    "government_warning": {
+      "present": true,
+      "text": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems.",
+      "first_two_words_all_caps": true,
+      "first_two_words_bold": true,
+      "remainder_bold": false,
+      "is_continuous": true
+    }
+  },
+  "146c32aeb3921a8b4ec67bd68f41b721bacd16115d7e42d2916da49c1d646736": {
+    "brand_name": "HOPWORKS",
+    "class_type": "India Pale Ale",
+    "alcohol_content": {
+      "abv_percent": 6.8,
+      "proof": null
+    },
+    "net_contents": "355 mL",
+    "producer_bottler": "Hopworks Brewing Co., Portland, OR",
+    "country_of_origin": null,
+    "government_warning": {
+      "present": true,
+      "text": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems.",
+      "first_two_words_all_caps": true,
+      "first_two_words_bold": true,
+      "remainder_bold": false,
+      "is_continuous": true
+    }
   }
 };
