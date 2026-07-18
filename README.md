@@ -1,4 +1,4 @@
-# TTB Label Verification — Prototype
+# Label Verification System — Prototype
 
 An AI-assisted tool that helps a TTB compliance officer verify that an alcohol beverage
 **label** (distilled spirits, wine, or malt beverage) matches the **declared data** from its
