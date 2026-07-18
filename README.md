@@ -99,6 +99,24 @@ Roll-up: any `FAIL` → `FAIL`; else any `FLAG` → `FLAG`; else `PASS`.
 
 ---
 
+## Tools used
+
+- **TypeScript 5** on **Node.js ≥ 20.9** — the whole codebase and the deterministic decision
+  engine; the **117** tests run on Node's built-in test runner (`node --test`), executed through
+  **tsx** (TypeScript run directly, no separate build step).
+- **Next.js 16** (App Router) with **React 19** — the single-label and batch UIs *and* the
+  `/api/*` routes, in one deployable service.
+- **Claude Haiku** (`claude-haiku-4-5`) via the **Anthropic SDK** (`@anthropic-ai/sdk`) — vision
+  extraction only, at `temperature: 0`; chosen over classical OCR because Tesseract cannot report
+  whether text is **bold**, which § 16.22 requires.
+- **Zod 4** — validates every structured read, so a malformed model response is caught, never trusted.
+- **sharp** — rasterizes the HTML/CSS adversarial labels into the PNG test-fixture corpus.
+- **ESLint 9** (+ `eslint-config-next`) — linting.
+- **Visual Studio Code** — development environment.
+- **Railway** — hosts the live deployment (auto-deploys on push to `main`).
+
+---
+
 ## The checks
 
 **Against the application**
