@@ -25,12 +25,12 @@ Upload a sample label from [`images/`](images/) to try it.
 | Area | State |
 |---|---|
 | Extraction engine (image → structured data) | ✅ Implemented (Claude Haiku vision + mock mode) |
-| Compliance decision engine — all 7 fields + citations | ✅ Implemented, 91 unit tests passing |
+| Compliance decision engine — all 7 fields + citations | ✅ Implemented, 115 unit tests passing |
 | Content-hash result cache | ✅ Implemented |
 | Single-label UI (508 / WCAG AA) | ✅ Implemented |
 | Server-side batch + CSV export | ✅ Implemented (`/batch`, exception-first view) |
 | Measurement harness (sensitivity/specificity) | ✅ Implemented (`npm run measure`) |
-| Measured latency figure | ✅ **p50 ≈ 2.9 s** (live `claude-haiku-4-5`; tail varies — see Measurement) |
+| Measured latency figure | ✅ **p50 ≈ 2.6 s** (live `claude-haiku-4-5`; tail varies — see Measurement) |
 | Deployed URL | ✅ **Live** — https://ttb-label-verify-production-8bcd.up.railway.app |
 
 Every figure above is **measured, not asserted** — see [Measurement](#measurement-measured-live).
@@ -49,7 +49,7 @@ npm install
 npm run demo          # prints verdicts for several example labels
 npm run spike:mock    # runs one extraction through the pipeline + latency
 
-# 2. Run the test suite (90 tests, no key needed):
+# 2. Run the test suite (115 tests, no key needed):
 npm test
 
 # ...and the measurement harness (no key = engine baseline; with a key = live accuracy):
@@ -220,20 +220,16 @@ via `npm run measure`. The harness scores the full pipeline (model reads image �
 decides) against each fixture's known verdict; ground truth per check is the verdict on a
 *perfect* read, so any discrepancy isolates an error the **vision step** introduced.
 
-**Results (live model, original 9-label spirits corpus):**
+**Results (live model `claude-haiku-4-5`, full 11-label corpus — spirits, wine & malt):**
 
 | Metric | Value |
 |---|---|
-| Overall verdict accuracy | **9 / 9** (no off-diagonal) |
+| Overall verdict accuracy | **11 / 11** (no off-diagonal) |
 | Per-check sensitivity & specificity | **100%** across all checks |
-| Latency | **p50 ≈ 2.9 s** — within the "about 5 seconds" target |
-| Confusion | PASS→PASS ×1 · FLAG→FLAG ×3 · FAIL→FAIL ×5 |
+| Latency | **p50 ≈ 2.6 s · max ≈ 4.0 s** — within the "about 5 seconds" target |
+| Confusion | PASS→PASS ×3 · FLAG→FLAG ×2 · FAIL→FAIL ×6 |
 
-> The corpus has since grown to **11 labels** spanning spirits, wine, and malt (a compliant
-> wine, a table-wine-over-14% failure, and a compliant malt IPA). Re-run `npm run measure` to
-> refresh these figures against the full set.
-
-> **Latency, disclosed honestly.** The *median* is ~2.9 s and meets the stated "about 5
+> **Latency, disclosed honestly.** The *median* is ~2.6 s and meets the stated "about 5
 > seconds" adoption bar. But **latency scales with image size**, and images are sent at full
 > fidelity (a deliberate choice — no downscaling, to avoid altering the reviewer's input), so
 > a large photograph can take longer and individual calls occasionally exceed 5 s (up to
