@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import type { FieldVerdict, Verdict } from '@/lib/verdict/types';
 import type { Extraction } from '@/lib/extraction/schema';
@@ -11,6 +11,20 @@ interface VerifyResponse {
   verdicts: FieldVerdict[];
   extraction: Extraction | null;
   meta: { latencyMs: number; source: string; cached: boolean; error: string | null };
+}
+
+interface Sample {
+  id: string;
+  name: string;
+  filename: string;
+  declared: {
+    brand_name: string | null;
+    class_type: string | null;
+    alcohol_content: string | number | null;
+    net_contents: string | null;
+    producer_bottler: string | null;
+    country_of_origin: string | null;
+  };
 }
 
 /** Verdict presentation — colour AND icon AND text, never colour alone (WCAG 1.4.1). */
@@ -33,7 +47,15 @@ export default function Home() {
   const [dragging, setDragging] = useState(false);
   const [result, setResult] = useState<VerifyResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [samples, setSamples] = useState<Sample[]>([]);
   const resultsRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    fetch('/api/samples')
+      .then((r) => r.json())
+      .then((d) => setSamples(d.samples ?? []))
+      .catch(() => {});
+  }, []);
 
   function chooseFile(f: File | null) {
     setFile(f);
@@ -41,6 +63,25 @@ export default function Home() {
       if (old) URL.revokeObjectURL(old);
       return f ? URL.createObjectURL(f) : null;
     });
+  }
+
+  // One-click demo: load a sample label's image AND its declared fields.
+  async function loadSample(s: Sample) {
+    setError(null);
+    setResult(null);
+    try {
+      const res = await fetch(`/api/sample-image/${encodeURIComponent(s.filename)}`);
+      const blob = await res.blob();
+      chooseFile(new File([blob], s.filename, { type: blob.type || 'image/png' }));
+      setBrand(s.declared.brand_name ?? '');
+      setClassType(s.declared.class_type ?? '');
+      setAbv(s.declared.alcohol_content == null ? '' : String(s.declared.alcohol_content));
+      setNetContents(s.declared.net_contents ?? '');
+      setBottler(s.declared.producer_bottler ?? '');
+      setCountry(s.declared.country_of_origin ?? '');
+    } catch {
+      setError('Could not load the sample label.');
+    }
   }
 
   function onDrop(e: React.DragEvent) {
@@ -86,11 +127,18 @@ export default function Home() {
   return (
     <div className={styles.sheet}>
       <header className={styles.docHead}>
-        <p className={styles.kicker}>Official prototype · TTB Compliance Division</p>
-        <h1 className={styles.docTitle}>Label Verification System</h1>
-        <p className={styles.docMeta}>
-          27 CFR Parts 4, 5, 7 &amp; 16 · Alcohol beverages · <Link href="/batch">batch review →</Link>
-        </p>
+        <div className={styles.headRow}>
+          <div>
+            <p className={styles.kicker}>Official prototype · TTB Compliance Division</p>
+            <h1 className={styles.docTitle}>Label Verification System</h1>
+          </div>
+          <Link href="/batch" className={styles.batchBtn}>
+            <span className={styles.batchIcon} aria-hidden="true">▤</span>
+            <span>Batch review</span>
+            <span aria-hidden="true">→</span>
+          </Link>
+        </div>
+        <p className={styles.docMeta}>Alcohol beverages</p>
         <hr className={styles.ruleDouble} />
       </header>
 
@@ -135,6 +183,32 @@ export default function Home() {
             {file ? file.name : 'PNG · JPEG · WebP · GIF'}
           </p>
         </div>
+
+        {samples.length > 0 && (
+          <div className={styles.sampleRow}>
+            <label htmlFor="sample" className={styles.sampleLabel}>
+              No label handy? Load a sample →
+            </label>
+            <select
+              id="sample"
+              className={styles.sampleSelect}
+              value=""
+              onChange={(e) => {
+                const s = samples.find((x) => x.id === e.target.value);
+                if (s) loadSample(s);
+              }}
+            >
+              <option value="" disabled>
+                Choose a sample label…
+              </option>
+              {samples.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
         <div className={styles.declared}>
           <div className={styles.row}>

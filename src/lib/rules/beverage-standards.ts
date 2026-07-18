@@ -42,7 +42,7 @@ export interface BeverageStandard {
 export function detectBeverageType(classType: string): BeverageType {
   const t = ` ${normalize(classType)} `;
   if (
-    /\b(wine|champagne|sparkling|prosecco|cava|port|sherry|vermouth|aperitif|angelica|muscatel|madeira|marsala|retsina|sake|mead|cider|perry|moscato|sangria|rose)\b/.test(t) ||
+    /\b(wine|champagne|sparkling|prosecco|cava|port|sherry|vermouth|aperitif|angelica|muscat|muscatel|madeira|marsala|retsina|sake|mead|cider|perry|moscato|sangria|rose)\b/.test(t) ||
     /\b(sauvignon|cabernet|chardonnay|merlot|pinot|riesling|zinfandel|syrah|shiraz|malbec|grenache|sangiovese|tempranillo|gewurztraminer|viognier|gamay|barbera|nebbiolo|semillon|chenin|mourvedre|carignan|verdot)\b/.test(t) ||
     /\b(burgundy|chablis|chianti|claret|sauterne|sauternes|moselle|hock|tokay|beaujolais|rioja|bordeaux)\b/.test(t)
   )
@@ -58,7 +58,8 @@ export function detectBeverageType(classType: string): BeverageType {
 export function matchStandard(classType: string, table: BeverageStandard[]): BeverageStandard | null {
   const text = ` ${normalize(classType)} `;
   for (const std of table) {
-    if (std.keywords.every((k) => text.includes(` ${k} `) || text.includes(` ${k}`) || text.includes(`${k} `))) {
+    // Whole-word match only (space-padded), so e.g. "port" ≠ "Porter".
+    if (std.keywords.every((k) => text.includes(` ${k} `))) {
       return std;
     }
   }

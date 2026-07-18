@@ -92,9 +92,12 @@ export const SUBPART_I_AUTHORITY = SUBPART_I;
  *  in the (normalized) class/type text. Returns null when the designation isn't
  *  in our table — an honest "not evaluated", never a guess. */
 export function matchStandard(classType: string): StandardOfIdentity | null {
+  // Whole-word match: the text is space-padded on both ends, so ` k ` matches k
+  // at any position (first/last included) WITHOUT matching it as a substring of a
+  // larger word — e.g. "gin" must not match "Ginjo" (sake).
   const text = ` ${normalize(classType)} `;
   for (const soi of STANDARDS_OF_IDENTITY) {
-    if (soi.keywords.every((k) => text.includes(` ${k} `) || text.includes(` ${k}`) || text.includes(`${k} `))) {
+    if (soi.keywords.every((k) => text.includes(` ${k} `))) {
       return soi;
     }
   }

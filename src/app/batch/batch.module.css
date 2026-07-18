@@ -1,4 +1,5 @@
-/* Shared document theme (mirrors the single-label page) */
+/* Shared document theme (mirrors the single-label page): monospace for the
+   dossier character, legible sans for reading text, larger type + 44px targets. */
 .sheet {
   max-width: 840px;
   margin: 0 auto;
@@ -7,20 +8,77 @@
 .docHead {
   margin-bottom: 1.75rem;
 }
+.headRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.25rem;
+}
+/* Prominent, obvious navigation back to single-label review (was a buried link). */
+.navBtn {
+  flex-shrink: 0;
+  margin-top: 0.25rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 44px;
+  padding: 0 1.1rem;
+  background: var(--paper-2);
+  border: 2px solid var(--ink);
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-decoration: none;
+  white-space: nowrap;
+  box-shadow: 3px 3px 0 -1px var(--rule-strong);
+  transition: background 0.12s, color 0.12s, box-shadow 0.12s, transform 0.12s;
+}
+.navBtn:hover {
+  background: var(--ink);
+  color: var(--paper);
+  box-shadow: 4px 4px 0 -1px var(--rule-strong);
+}
+.navBtn:active {
+  transform: translate(1px, 1px);
+  box-shadow: 2px 2px 0 -1px var(--rule-strong);
+}
+.navIcon {
+  font-size: 1.05rem;
+  line-height: 1;
+}
+@media (max-width: 560px) {
+  .headRow {
+    flex-direction: column;
+    align-items: stretch; /* children fill width so the title wraps (no overflow) */
+    gap: 0.9rem;
+  }
+  .navBtn {
+    align-self: stretch;
+    justify-content: center;
+    margin-top: 0;
+  }
+}
 .kicker {
-  font-size: 11px;
+  font-family: var(--mono);
+  font-size: 12px;
   letter-spacing: 0.22em;
   text-transform: uppercase;
   color: var(--ink-soft);
 }
 .docTitle {
+  font-family: var(--mono);
   font-size: 1.7rem;
   font-weight: 700;
   margin: 0.35rem 0 0.3rem;
+  overflow-wrap: break-word;
 }
 .docMeta {
-  font-size: 12px;
-  letter-spacing: 0.04em;
+  font-family: var(--mono);
+  font-size: 13px;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--ink-soft);
 }
@@ -41,7 +99,8 @@
   display: flex;
   align-items: baseline;
   gap: 0.6rem;
-  font-size: 0.95rem;
+  font-family: var(--mono);
+  font-size: 1rem;
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -68,18 +127,20 @@
   border-style: solid;
 }
 .dropPrompt {
+  font-family: var(--mono);
   color: var(--ink-soft);
-  font-size: 13px;
-  letter-spacing: 0.05em;
+  font-size: 14px;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
 }
 .bracketBtn {
   display: inline-block;
-  min-height: 40px;
-  line-height: 38px;
-  padding: 0 0.6rem;
+  min-height: 44px;
+  line-height: 42px;
+  padding: 0 0.9rem;
   border: 1.5px solid var(--ink);
-  font-size: 13px;
+  font-family: var(--mono);
+  font-size: 14px;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -106,20 +167,65 @@
   outline-offset: 2px;
 }
 .hint {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--ink-soft);
 }
 .submitRow {
   margin-top: 1.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+/* Secondary, clearly-clickable button: run the built-in sample labels. */
+.sampleBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 48px;
+  padding: 0 1.3rem;
+  background: var(--paper-2);
+  border: 2px solid var(--ink);
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  box-shadow: 3px 3px 0 -1px var(--rule-strong);
+  transition: background 0.12s, color 0.12s, box-shadow 0.12s, transform 0.12s;
+}
+.sampleBtn:hover:not(:disabled) {
+  background: var(--ink);
+  color: var(--paper);
+  box-shadow: 4px 4px 0 -1px var(--rule-strong);
+}
+.sampleBtn:active:not(:disabled) {
+  transform: translate(1px, 1px);
+  box-shadow: 2px 2px 0 -1px var(--rule-strong);
+}
+.sampleBtn:disabled {
+  opacity: 0.5;
+  cursor: progress;
+}
+.sampleIcon {
+  font-size: 1.05rem;
+  line-height: 1;
+}
+.sampleHint {
+  margin: 0.7rem 0 0;
+  font-size: 13px;
+  color: var(--ink-soft);
 }
 .submit {
-  min-height: 46px;
-  padding: 0 1.4rem;
+  min-height: 48px;
+  padding: 0 1.6rem;
   background: var(--ink);
   color: var(--paper);
   border: 1.5px solid var(--ink);
-  font-family: inherit;
-  font-size: 14px;
+  font-family: var(--mono);
+  font-size: 15px;
   font-weight: 700;
   letter-spacing: 0.09em;
   text-transform: uppercase;
@@ -135,14 +241,14 @@
 }
 .error {
   margin-top: 1rem;
-  padding: 0.6rem 0.75rem;
+  padding: 0.7rem 0.85rem;
   border: 1.5px solid var(--fail);
   color: var(--fail);
-  font-size: 13px;
+  font-size: 14px;
 }
 .empty {
   color: var(--ink-soft);
-  font-size: 13px;
+  font-size: 14px;
 }
 
 /* ---- Batch-specific ---- */
@@ -151,13 +257,18 @@
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  font-size: 14px;
+  font-family: var(--mono);
+  font-size: 15px;
   font-weight: 700;
 }
 .csvBtn {
   border: 1.5px solid var(--ink);
-  padding: 0.3rem 0.7rem;
-  font-size: 12px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 0.9rem;
+  font-family: var(--mono);
+  font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -191,11 +302,146 @@
   padding: 0;
 }
 .item {
-  padding: 0.9rem 0;
+  display: grid;
+  grid-template-columns: 76px 1fr;
+  gap: 1rem;
+  align-items: start;
+  padding: 1rem 0;
   border-bottom: 1px solid var(--rule);
 }
 .item:first-child {
   border-top: 1px solid var(--rule);
+}
+/* Label thumbnail — lets a reviewer confirm the finding against the actual
+   label at a glance; click to open it full size. */
+.thumbBtn {
+  display: block;
+  padding: 0;
+  line-height: 0;
+  border: 1px solid var(--rule-strong);
+  background: var(--paper-2);
+  cursor: pointer;
+}
+.thumbBtn:hover {
+  border-color: var(--ink);
+}
+.thumb {
+  display: block;
+  width: 74px;
+  height: 74px;
+  object-fit: contain;
+}
+.thumbEmpty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 76px;
+  height: 76px;
+  border: 1px dashed var(--rule-strong);
+  background: var(--paper-2);
+  font-size: 10px;
+  text-align: center;
+  color: var(--ink-soft);
+}
+.itemBody {
+  min-width: 0;
+}
+.expandBtn {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 34px;
+  padding: 0 0.7rem;
+  background: var(--paper-2);
+  border: 1.5px solid var(--ink);
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.expandBtn:hover {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+/* ---- Expand modal (native <dialog>) ---- */
+.modal {
+  width: min(680px, 92vw);
+  max-height: 90vh;
+  padding: 0;
+  border: 2px solid var(--ink);
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow: 6px 6px 0 -1px var(--rule-strong);
+}
+.modal::backdrop {
+  background: rgba(23, 19, 12, 0.55);
+}
+.modalInner {
+  padding: 1.25rem 1.4rem 1.6rem;
+  overflow-y: auto;
+  max-height: 90vh;
+}
+.modalHead {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding-bottom: 0.8rem;
+  border-bottom: 1px solid var(--rule);
+}
+.modalTitle {
+  font-family: var(--mono);
+  font-weight: 700;
+  font-size: 15px;
+  overflow-wrap: anywhere;
+}
+.modalClose {
+  margin-left: auto;
+  min-width: 40px;
+  min-height: 40px;
+  background: transparent;
+  border: 1.5px solid var(--ink);
+  color: var(--ink);
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.modalClose:hover {
+  background: var(--ink);
+  color: var(--paper);
+}
+.modalImg {
+  display: block;
+  width: 100%;
+  max-height: 46vh;
+  object-fit: contain;
+  margin: 1.1rem 0;
+  border: 1px solid var(--rule-strong);
+  background: var(--paper-2);
+}
+.modalFindings {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+.modalFinding {
+  display: grid;
+  grid-template-columns: 1.4rem 1fr;
+  gap: 0.5rem;
+  font-size: 15px;
+  line-height: 1.55;
+}
+.modalFinding a {
+  color: var(--accent);
+  font-weight: 700;
+  white-space: nowrap;
 }
 .itemHead {
   display: flex;
@@ -203,28 +449,33 @@
   gap: 0.6rem;
 }
 .sym {
+  font-family: var(--mono);
   font-weight: 700;
+  font-size: 1.05rem;
 }
 .filename {
+  font-family: var(--mono);
   font-weight: 700;
+  font-size: 15px;
   overflow-wrap: anywhere;
 }
 .tag {
+  font-family: var(--mono);
   margin-left: auto;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  padding: 0.05rem 0.4rem;
+  padding: 0.08rem 0.45rem;
   border: 1px solid currentColor;
   white-space: nowrap;
 }
 .reasons {
-  margin: 0.5rem 0 0 1.9rem;
+  margin: 0.5rem 0 0;
   padding: 0;
   list-style: none;
-  font-size: 13px;
-  line-height: 1.5;
+  font-size: 14px;
+  line-height: 1.55;
 }
 .reasons li {
   margin-bottom: 0.35rem;
@@ -236,21 +487,54 @@
 }
 .passDisclosure {
   margin-top: 1.5rem;
-  font-size: 13px;
+  font-size: 14px;
   color: var(--ink-soft);
 }
 .passDisclosure summary {
   cursor: pointer;
   font-weight: 700;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
 }
 .passList {
   list-style: none;
   margin: 0.75rem 0 0;
   padding: 0;
-  columns: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
-.passList li {
-  margin-bottom: 0.3rem;
+.passItem {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid var(--rule);
+}
+.passThumbBtn {
+  flex-shrink: 0;
+  display: block;
+  padding: 0;
+  line-height: 0;
+  border: 1px solid var(--rule-strong);
+  background: var(--paper-2);
+  cursor: pointer;
+}
+.passThumbBtn:hover {
+  border-color: var(--ink);
+}
+.passThumb {
+  display: block;
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+}
+.passName {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--mono);
+  font-size: 14px;
   overflow-wrap: anywhere;
 }
 

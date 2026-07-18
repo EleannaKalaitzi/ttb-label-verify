@@ -89,6 +89,24 @@ test('non-grape Part 4 wines (cider, perry, sake, mead) are evaluated as wine, n
 
 // ---- Malt (27 CFR Part 7) — evaluated by designation recognition, not ABV ----
 
+test('whole-word matching: "Ginjo" sake is wine (not gin); "Porter" is malt (not port)', () => {
+  // Regression: "Junmai Ginjo Sake" used to match the spirit "gin" (40% floor)
+  // via partial-word matching → a false FAIL. It is a wine.
+  const sake = checkStandardOfIdentity('Junmai Ginjo Sake', 15.5);
+  assert.equal(sake.verdict, 'PASS');
+  assert.match(sake.citation!.section, /\b4\./); // Part 4 wine, not § 5.144 gin
+  // "Porter" must be the malt beverage, not wine "port".
+  const porter = checkStandardOfIdentity('Robust Porter', 6);
+  assert.equal(porter.verdict, 'PASS');
+  assert.match(porter.citation!.section, /7\.63/);
+});
+
+test('"Orange Muscat" is recognized as wine (§ 4.6 envelope), not "type undetermined"', () => {
+  const v = checkStandardOfIdentity('Orange Muscat', 13.68);
+  assert.equal(v.verdict, 'PASS');
+  assert.match(v.citation!.section, /\b4\./);
+});
+
 test('a recognized malt designation PASSes (§ 7.63); malt has no ABV threshold', () => {
   const v = checkStandardOfIdentity('Imperial Stout', 8);
   assert.equal(v.verdict, 'PASS');
