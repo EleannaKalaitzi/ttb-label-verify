@@ -13,7 +13,8 @@ stating its **regulatory authority** in plain language.
 
 🔗 **Live demo:** https://ttb-label-verify-production-8bcd.up.railway.app — reads real labels via
 Claude Haiku (single-label + [`/batch`](https://ttb-label-verify-production-8bcd.up.railway.app/batch)).
-Upload a sample label from [`images/`](images/) to try it.
+Load a built-in sample on either page (single-label dropdown, or batch **"Load sample labels"**),
+or upload your own.
 
 📄 The original brief: [`ASSIGNMENT.md`](ASSIGNMENT.md) · Design decisions & rationale:
 [`ARCHITECTURE.md`](ARCHITECTURE.md)
@@ -25,7 +26,7 @@ Upload a sample label from [`images/`](images/) to try it.
 | Area | State |
 |---|---|
 | Extraction engine (image → structured data) | ✅ Implemented (Claude Haiku vision + mock mode) |
-| Compliance decision engine — all 7 fields + citations | ✅ Implemented, 115 unit tests passing |
+| Compliance decision engine — all 7 fields + citations | ✅ Implemented, 117 unit tests passing |
 | Content-hash result cache | ✅ Implemented |
 | Single-label UI (508 / WCAG AA) | ✅ Implemented |
 | Server-side batch + CSV export | ✅ Implemented (`/batch`, exception-first view) |
@@ -49,7 +50,7 @@ npm install
 npm run demo          # prints verdicts for several example labels
 npm run spike:mock    # runs one extraction through the pipeline + latency
 
-# 2. Run the test suite (115 tests, no key needed):
+# 2. Run the test suite (117 tests, no key needed):
 npm test
 
 # ...and the measurement harness (no key = engine baseline; with a key = live accuracy):
@@ -128,18 +129,21 @@ Roll-up: any `FAIL` → `FAIL`; else any `FLAG` → `FLAG`; else `PASS`.
 
 ## Batch review (`/batch`)
 
-Peak-season importers submit 200–300 labels at once. The batch screen accepts many images
-and processes them **server-side** with a bounded worker pool (6 in flight; the SDK's backoff
-handles rate limits) — a reviewer can start a run and close the tab. Each label is isolated,
-so one that fails to process returns a FLAG, not an error that sinks the run.
+Peak-season importers submit 200–300 labels at once. The batch screen accepts many images —
+**dragged onto the drop zone or selected**, with drops **accumulating** so a batch can be built
+from several folders (de-duped, capped at 300) — and processes them **server-side** with a
+bounded worker pool (6 in flight; the SDK's backoff handles rate limits), so a reviewer can start
+a run and close the tab. Each label is isolated, so one that fails to process returns a FLAG, not
+an error that sinks the run.
 
 Because a batch has no per-image application data, batch mode runs the **label-intrinsic**
 checks only — the government warning, the standard of identity, and the proof/ABV consistency
 cross-check. The results view is **exception-first**: it opens on the count needing attention,
 sorted by severity, with clean labels collapsed behind a disclosure — an agent's job is
-finding the labels that *aren't* fine, not scrolling 288 that are. Results export to **CSV**
-(verdict, failing checks, reasons, citations) — the durable record, since nothing is stored
-server-side.
+finding the labels that *aren't* fine, not scrolling 288 that are. A batch run exports to **CSV**
+(verdict, failing checks, reasons, citations), and a **single-label** result exports the same way
+(one row per check, with the application value, the label value, the reason, and citation). The
+export is the durable record, since nothing is stored server-side.
 
 ## Regulatory basis
 
@@ -282,6 +286,30 @@ the full Subparts.
 
 ---
 
+## Assumptions
+
+- **Application data is entered in-app, not fetched.** COLA-system integration is out of scope
+  (confirmed with IT), so a single label's declared values are typed into the form. A batch has
+  no per-label application data, so it runs the label-intrinsic checks (warning, standard of
+  identity, proof/ABV consistency) — the high-volume triage Sarah Chen asked for.
+- **One image per label.** Real COLAs have front and back labels (the warning usually on the
+  back); the prototype verifies the single image it is given and flags fields it cannot see.
+- **Nothing is persisted.** No database, no stored artwork — results are ephemeral and the CSV
+  export (single label *and* batch) is the durable record, consistent with the federal
+  PII/retention caution IT raised.
+- **Rules change on a decade timescale**, so they are pinned **offline data verified against a
+  committed CFR source**, not fetched live (the agency firewall blocks outbound calls anyway).
+- **Cosmetic differences are not mismatches** — case, punctuation and whitespace are normalized;
+  only a substantive difference fails (Dave Morrison's `STONE'S THROW` = `Stone's Throw`).
+- **Bold and contrast are advisory** (visual judgment, not measurement), and type size is
+  unmeasurable from an uncalibrated photo — these are flagged or documented, never faked.
+- **The ~5-second target is the p50** on a normally-sized image; the tail scales with image size,
+  disclosed honestly under [Measurement](#measurement-measured-live).
+- **Verdicts advise; the officer decides.** Nothing is auto-rejected — every verdict is
+  overridable and shows its reason and citation.
+
+---
+
 ## Project layout
 
 ```
@@ -293,8 +321,8 @@ src/lib/
   verify/       orchestrator: extraction + declared data → all verdicts
   batch/        server-side batch runner + CSV export
   fixtures/     adversarial label specs (the measurement corpus)
-src/app/        single-label UI, /batch UI, /api/{verify,batch,health} routes
-scripts/        spike, demo, fixtures (render), measure — all runnable without a key
+src/app/        single-label UI (+ CSV export), /batch UI, /api/{verify,batch,samples,health} routes
+scripts/        spike, demo, fixtures (render), measure, samples:record — all runnable without a key
 ```
 
 Run `npm test` to exercise every check at its boundaries, including the FLAG/FAIL thresholds.

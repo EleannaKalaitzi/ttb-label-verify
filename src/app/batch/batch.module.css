@@ -170,6 +170,17 @@
   font-size: 13px;
   color: var(--ink-soft);
 }
+/* Reset the accumulated selection (drops/picks add up, so a clear is needed). */
+.clearBtn {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--ink);
+  background: none;
+  border: none;
+  padding: 0;
+  text-decoration: underline;
+  cursor: pointer;
+}
 .submitRow {
   margin-top: 1.5rem;
   display: flex;
@@ -217,26 +228,6 @@
   margin: 0.7rem 0 0;
   font-size: 13px;
   color: var(--ink-soft);
-}
-/* Optional applications-CSV attach (batch verify against COLA records). */
-.csvRow {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.75rem;
-  margin-top: 1rem;
-  padding: 0.9rem 1rem;
-  border: 1px dashed var(--rule-strong);
-  background: var(--paper-2);
-}
-/* Verification-mode banner in the findings section. */
-.modeNote {
-  margin: 0 0 0.9rem;
-  padding: 0.55rem 0.8rem;
-  background: var(--paper-2);
-  border-left: 3px solid var(--rule-strong);
-  font-size: 14px;
-  color: var(--ink);
 }
 .submit {
   min-height: 48px;
