@@ -86,6 +86,23 @@ test('class coverage: gin, rum, brandy, tequila, mezcal, scotch all resolve to �
   }
 });
 
-test('unknown designation is "not evaluated" (FLAG), never guessed', () => {
-  assert.equal(checkStandardOfIdentity('Sparkling Elderflower Wine', 12).verdict, 'FLAG');
+test('a spirit outside the encoded standards is flagged as a § 5.156 specialty product, never guessed', () => {
+  // Generic/geographic spirits with no numeric standard → specialty product FLAG.
+  assert.equal(checkStandardOfIdentity('Aquavit', 42).verdict, 'FLAG');
+  assert.equal(checkStandardOfIdentity('Absinthe', 60).verdict, 'FLAG');
+});
+
+test('malt beverages ARE evaluated — by designation recognition (§ 7.63), not ABV', () => {
+  for (const [designation] of [
+    ['India Pale Ale'],
+    ['Imperial Stout'],
+    ['Vienna Lager'],
+    ['Malt Liquor'],
+    ['Robust Porter'],
+  ] as const) {
+    const v = checkStandardOfIdentity(designation, 6.5);
+    assert.equal(v.verdict, 'PASS', `${designation} should be a recognized malt designation`);
+    assert.match(v.reason, /recognized malt-beverage/i);
+    assert.match(v.citation?.section ?? '', /7\.63/);
+  }
 });

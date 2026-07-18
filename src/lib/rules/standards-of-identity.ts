@@ -1,5 +1,8 @@
 import { normalize } from '../compare/normalize';
 import type { FieldVerdict } from '../verdict/types';
+import { detectBeverageType, checkAgainstTable } from './beverage-standards';
+import { WINE_STANDARDS, wineEnvelope } from './wine';
+import { evaluateMalt } from './malt';
 
 /**
  * Standards of identity — class/type validity (27 CFR Part 5, Subpart I).
@@ -21,7 +24,7 @@ import type { FieldVerdict } from '../verdict/types';
  * designed (deliberately unbuilt) staleness check — never a request-path call.
  */
 
-export const SOI_VERIFIED_AGAINST = '2026-07-16';
+export const SOI_VERIFIED_AGAINST = '2026-07-17';
 const SUBPART_I = 'https://www.ecfr.gov/current/title-27/part-5/subpart-I';
 
 /** Canonical eCFR link for a section string like "27 CFR § 5.143". */
@@ -67,6 +70,20 @@ export const STANDARDS_OF_IDENTITY: StandardOfIdentity[] = [
   // Tequila and mezcal are agave spirits under § 5.148.
   { name: 'Tequila', keywords: ['tequila'], minAbv: 40, citationSection: '27 CFR § 5.148' },
   { name: 'Mezcal', keywords: ['mezcal'], minAbv: 40, citationSection: '27 CFR § 5.148' },
+  { name: 'Agave Spirits', keywords: ['agave'], minAbv: 40, citationSection: '27 CFR § 5.148' },
+  // Neutral spirits and grain spirits — § 5.142 (vodka handled above).
+  { name: 'Neutral Spirits', keywords: ['neutral', 'spirits'], minAbv: 40, citationSection: '27 CFR § 5.142' },
+  { name: 'Grain Spirits', keywords: ['grain', 'spirits'], minAbv: 40, citationSection: '27 CFR § 5.142' },
+  // Named brandies are all the class "brandy" (§ 5.145), 40% minimum bottling strength.
+  { name: 'Cognac', keywords: ['cognac'], minAbv: 40, citationSection: '27 CFR § 5.145' },
+  { name: 'Armagnac', keywords: ['armagnac'], minAbv: 40, citationSection: '27 CFR § 5.145' },
+  { name: 'Calvados', keywords: ['calvados'], minAbv: 40, citationSection: '27 CFR § 5.145' },
+  { name: 'Pisco', keywords: ['pisco'], minAbv: 40, citationSection: '27 CFR § 5.145' },
+  { name: 'Grappa', keywords: ['grappa'], minAbv: 40, citationSection: '27 CFR § 5.145' },
+  // Applejack / blended applejack — § 5.146.
+  { name: 'Applejack', keywords: ['applejack'], minAbv: 40, citationSection: '27 CFR § 5.146' },
+  // Cachaça is a type of rum — § 5.147.
+  { name: 'Cachaça', keywords: ['cachaca'], minAbv: 40, citationSection: '27 CFR § 5.147' },
 ];
 
 export const SUBPART_I_AUTHORITY = SUBPART_I;
@@ -114,30 +131,42 @@ export function checkStandardOfIdentity(
     };
   }
 
+  // Spirits classes that DISPLACE the base-spirit table (checked first, because
+  // their designations contain base-spirit words but carry different or no
+  // rules): flavored spirits (§ 5.151, 30%), cordials & liqueurs (§ 5.150), and
+  // imitations (§ 5.152). This is what stops "Cherry Flavored Bourbon Whisky"
+  // (30% min) and "Sloe Gin" (a liqueur, no min) from being falsely failed
+  // against whisky's/gin's 40%.
+  const special = checkSpiritsSpecialClass(classType, abv);
+  if (special) return special;
+
   const soi = matchStandard(classType);
   if (soi == null) {
-    // Beverage-aware: point wine/malt designations at their own regulations
-    // rather than a spirits-framed message. The spirits table is authoritative;
-    // other beverage types are honestly "not evaluated".
-    const t = classType.toLowerCase();
-    const domain = /\b(wine|champagne|sparkling|port|sherry|vermouth|sauvignon|cabernet|chardonnay|merlot|pinot|riesling|zinfandel|ros[eé]|prosecco|moscato|sangria)\b/.test(t)
-      ? { section: '27 CFR Part 4', url: 'https://www.ecfr.gov/current/title-27/part-4', kind: 'Wine' }
-      : /\b(beer|ale|lager|stout|porter|ipa|pilsner|malt liquor|malt beverage)\b/.test(t)
-        ? { section: '27 CFR Part 7', url: 'https://www.ecfr.gov/current/title-27/part-7', kind: 'Malt-beverage' }
-        : { section: '27 CFR Part 5, Subpart I', url: SUBPART_I, kind: 'Distilled-spirits' };
-    return {
-      ...base,
-      verdict: 'FLAG',
-      reason:
-        `“${classType}” is outside this tool's standards-of-identity rule set (which covers distilled ` +
-        `spirits). ${domain.kind} standards of identity (${domain.section}) are not evaluated here — a ` +
-        `reviewer should assess it directly.`,
-      citation: {
-        section: domain.section,
-        authority: domain.url,
-        plainLanguage: 'Class and type designations are legally defined standards of identity, by beverage type.',
-      },
-    };
+    // Dispatch to the beverage-specific rule table (offline data-as-code). Empty
+    // stubs today → checkAgainstTable returns null → honest "not evaluated"; once
+    // a table is populated from its pinned CFR source, real checks run here with
+    // no other wiring.
+    const type = detectBeverageType(classType);
+    if (type === 'wine') {
+      // Specific type (table/dessert/sherry/…) first; otherwise the Part 4 scope
+      // envelope, so cider, perry, sake, mead and bare varietals are evaluated.
+      return checkAgainstTable(classType, abv, WINE_STANDARDS) ?? wineEnvelope(classType, abv);
+    }
+    if (type === 'malt') {
+      // Malt has NO numeric standard of identity (no min/max bottling strength,
+      // unlike spirits' 40% or wine's 7–24%). Its standard of identity is the
+      // class/type DESIGNATION itself (§ 7.63) — evaluated by recognition.
+      return evaluateMalt(classType);
+    }
+    if (type === 'spirits') {
+      // A spirit meeting no standard of identity is a "distilled spirits
+      // specialty product" (§ 5.156): designated by statement of composition,
+      // with no minimum bottling strength. We can't verify the statement of
+      // composition from the label, so we FLAG for a reviewer rather than fail.
+      return spiritsSpecialty(classType);
+    }
+    // Beverage type undetermined — do NOT assert a spirits standard for it.
+    return notEvaluatedUnknown(classType);
   }
 
   const citation = {
@@ -177,3 +206,139 @@ export function checkStandardOfIdentity(
     citation,
   };
 }
+
+/** Base-spirit words that make a "flavored X" a § 5.151 flavored spirit (as
+ *  opposed to e.g. a "flavored malt beverage", which is a malt product). */
+const SPIRIT_BASE = /\b(whisky|whiskey|bourbon|rye|scotch|vodka|gin|rum|tequila|mezcal|agave|brandy|cognac|neutral spirits?)\b/;
+
+/**
+ * Distilled-spirits classes that DISPLACE the base-spirit table because their
+ * designations contain base-spirit words but carry different (or no) rules:
+ *   • Imitations (§ 5.152): recognized designation, no ABV floor.
+ *   • Flavored spirits (§ 5.151): 30% minimum — "Cherry Flavored Bourbon Whisky"
+ *     is NOT held to whisky's 40%.
+ *   • Cordials & liqueurs (§ 5.150): the class has NO minimum bottling strength;
+ *     named spirit-based types do — rock-and-X 24%, X-liqueur 30%. "Sloe gin" is
+ *     a liqueur (no floor), NOT gin at 40%.
+ * Returns a verdict, or null to fall through to the base-spirit table.
+ */
+function checkSpiritsSpecialClass(classType: string, abv: number | null | undefined): FieldVerdict | null {
+  const t = ` ${normalize(classType)} `;
+
+  // Imitations — § 5.152 — recognized designation, no bottling-strength standard.
+  if (/ imitation /.test(t)) {
+    return {
+      check: 'standards_of_identity',
+      label: 'Standard of identity (class/type validity)',
+      extracted: classType,
+      verdict: 'PASS',
+      reason: `“${classType}” is an imitation designation (§ 5.152), which carries no minimum bottling strength. The required word “imitation” is present.`,
+      citation: { section: '27 CFR § 5.152', authority: ecfrSectionUrl('§ 5.152'), plainLanguage: 'A product simulating a class or type of distilled spirits must bear the word "imitation" as part of its designation.' },
+    };
+  }
+
+  // Flavored spirits — § 5.151 — 30% min — only when the base is a spirit, so a
+  // "flavored malt beverage" is left to the malt path.
+  if (/ flavored /.test(t) && SPIRIT_BASE.test(t)) {
+    return abvVerdict(classType, abv, 30, 'Flavored spirits', '27 CFR § 5.151',
+      'Flavored spirits (a base spirit plus added natural flavors) must be bottled at not less than 30% alcohol by volume (60 proof).');
+  }
+
+  // Cordials & liqueurs — § 5.150.
+  const rockAndX = / rock and (rye|bourbon|brandy|rum) /.test(t);
+  const isLiqueur =
+    rockAndX ||
+    / (liqueur|cordial|amaretto|kummel|ouzo|anisette|sambuca|curacao|goldwasser|schnapps) /.test(t) ||
+    / triple sec /.test(t) ||
+    / creme de /.test(t) ||
+    / sloe gin /.test(t);
+
+  if (isLiqueur) {
+    if (rockAndX) {
+      return abvVerdict(classType, abv, 24, 'Rock and rye/bourbon/brandy/rum', '27 CFR § 5.150(b)(3)',
+        'Rock and rye, rock and bourbon, rock and brandy, and rock and rum must be bottled at not less than 24% alcohol by volume.');
+    }
+    if (/ (liqueur|cordial) /.test(t) && / (rye|bourbon|rum|gin|brandy) /.test(t)) {
+      return abvVerdict(classType, abv, 30, 'Spirit-based liqueur', '27 CFR § 5.150(b)',
+        'A rye, bourbon, rum, gin, or brandy liqueur (or cordial) must be bottled at not less than 30% alcohol by volume.');
+    }
+    // Any other cordial/liqueur: § 5.150 sets NO minimum bottling strength.
+    return {
+      check: 'standards_of_identity',
+      label: 'Standard of identity (class/type validity)',
+      extracted: classType,
+      verdict: 'PASS',
+      reason: `“${classType}” is a recognized cordial/liqueur. 27 CFR § 5.150 sets no minimum bottling strength for the cordials-and-liqueurs class, so there is no ABV threshold to check — the designation is valid.`,
+      citation: { section: '27 CFR § 5.150', authority: ecfrSectionUrl('§ 5.150'), plainLanguage: 'Cordials and liqueurs are flavored spirits containing at least 2.5% sugar; the class carries no minimum bottling strength.' },
+    };
+  }
+
+  return null;
+}
+
+/** Build a minimum-bottling-strength verdict for a spirits designation. */
+function abvVerdict(
+  extracted: string,
+  abv: number | null | undefined,
+  minAbv: number,
+  name: string,
+  section: string,
+  plainLanguage: string,
+): FieldVerdict {
+  const base = {
+    check: 'standards_of_identity',
+    label: 'Standard of identity (class/type validity)',
+    extracted,
+    citation: { section, authority: ecfrSectionUrl(section), plainLanguage },
+  } as const;
+  if (abv == null) {
+    return { ...base, verdict: 'FLAG', reason: `“${name}” carries a minimum bottling strength of ${minAbv}% ABV, but the label's ABV could not be read. A reviewer should confirm it meets the minimum.` };
+  }
+  if (abv < minAbv) {
+    return { ...base, verdict: 'FAIL', declared: minAbv, reason: `“${name}” at ${abv}% ABV is below the ${minAbv}% minimum bottling strength for this designation.` };
+  }
+  return { ...base, verdict: 'PASS', declared: minAbv, reason: `“${name}” at ${abv}% ABV meets the ${minAbv}% minimum bottling strength.` };
+}
+
+/** A spirit meeting no standard of identity is a "distilled spirits specialty
+ *  product" (§ 5.156) — designated by statement of composition, no bottling-
+ *  strength standard. We can't verify the statement of composition from the
+ *  label, so we FLAG for review rather than assert a pass or fail. */
+function spiritsSpecialty(classType: string): FieldVerdict {
+  return {
+    check: 'standards_of_identity',
+    label: 'Standard of identity (class/type validity)',
+    extracted: classType,
+    verdict: 'FLAG',
+    reason:
+      `“${classType}” matches no specific distilled-spirits standard of identity, so it is a distilled ` +
+      `spirits specialty product (§ 5.156) — designated by a statement of composition, with no minimum ` +
+      `bottling strength. A reviewer should confirm it bears a truthful and adequate statement of composition.`,
+    citation: {
+      section: '27 CFR § 5.156',
+      authority: ecfrSectionUrl('§ 5.156'),
+      plainLanguage: 'Distilled spirits that meet no other standard of identity are specialty products, designated by a distinctive/fanciful name plus a statement of composition.',
+    },
+  };
+}
+
+/** Honest verdict when the beverage type itself can't be determined from the
+ *  class/type — we do NOT default to a spirits standard, we say we couldn't tell. */
+function notEvaluatedUnknown(classType: string): FieldVerdict {
+  return {
+    check: 'standards_of_identity',
+    label: 'Standard of identity (class/type validity)',
+    extracted: classType,
+    verdict: 'FLAG',
+    reason:
+      `The beverage type of “${classType}” could not be determined from its class/type, so no standard ` +
+      `of identity was applied. A reviewer should identify the product (wine, spirit, or malt beverage) ` +
+      `and confirm its designation.`,
+    citation: {
+      section: '27 CFR Parts 4, 5, 7',
+      authority: 'https://www.ecfr.gov/current/title-27',
+      plainLanguage: 'Standards of identity are defined by beverage type — wine (Part 4), distilled spirits (Part 5), and malt beverages (Part 7).',
+    },
+  };
+}
+
