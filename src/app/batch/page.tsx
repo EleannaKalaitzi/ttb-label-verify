@@ -30,8 +30,6 @@ const SEVERITY: Record<Verdict, number> = { FAIL: 0, FLAG: 1, PASS: 2 };
 
 export default function Batch() {
   const [files, setFiles] = useState<File[]>([]);
-  const [csvFile, setCsvFile] = useState<File | null>(null);
-  const [matched, setMatched] = useState<number | null>(null);
   const [job, setJob] = useState<BatchJob | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
@@ -67,9 +65,24 @@ export default function Batch() {
     return sampleMode ? `/samples/${encodeURIComponent(filename)}` : previews.get(filename);
   }
 
+  // Accumulate across drops and picks (de-duped by name+size) so a batch can be
+  // built up from several drops or folders, capped at the server's 300 limit.
   function addFiles(list: FileList | null) {
     if (!list) return;
-    setFiles(Array.from(list).filter((f) => f.type.startsWith('image/')));
+    const incoming = Array.from(list).filter((f) => f.type.startsWith('image/'));
+    if (incoming.length === 0) return;
+    setFiles((prev) => {
+      const seen = new Set(prev.map((f) => `${f.name}:${f.size}`));
+      const merged = [...prev];
+      for (const f of incoming) {
+        const key = `${f.name}:${f.size}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          merged.push(f);
+        }
+      }
+      return merged.slice(0, 300);
+    });
   }
 
   async function onSubmit(e: React.FormEvent) {
@@ -81,10 +94,8 @@ export default function Batch() {
     setError(null);
     setJob(null);
     setSampleMode(false);
-    setMatched(null);
     const body = new FormData();
     for (const f of files) body.append('images', f);
-    if (csvFile) body.append('applications', csvFile);
     try {
       const res = await fetch('/api/batch', { method: 'POST', body });
       const data = await res.json();
@@ -92,7 +103,6 @@ export default function Batch() {
         setError(data.error ?? 'Could not start the batch.');
         return;
       }
-      setMatched(typeof data.matched === 'number' ? data.matched : null);
       poll(data.jobId as string);
     } catch {
       setError('Could not reach the server. Please try again.');
@@ -103,7 +113,6 @@ export default function Batch() {
     setError(null);
     setJob(null);
     setSampleMode(true);
-    setMatched(null);
     try {
       const res = await fetch('/api/batch/sample', { method: 'POST' });
       const data = await res.json();
@@ -180,26 +189,20 @@ export default function Batch() {
           <input id="images" type="file" accept="image/png,image/jpeg,image/webp,image/gif" multiple
             className={styles.srOnly} onChange={(e) => addFiles(e.target.files)} />
           <label htmlFor="images" className={styles.bracketBtn}>[ Select files ]</label>
-          <p className={styles.hint}>{files.length > 0 ? `${files.length} label(s) selected` : 'Up to 300 · PNG · JPEG · WebP · GIF'}</p>
-        </div>
-
-        <div className={styles.csvRow}>
-          <input
-            id="applications"
-            type="file"
-            accept=".csv,text/csv"
-            className={styles.srOnly}
-            onChange={(e) => setCsvFile(e.target.files?.[0] ?? null)}
-          />
-          <label htmlFor="applications" className={styles.bracketBtn}>[ Attach applications CSV ]</label>
           <p className={styles.hint}>
-            {csvFile
-              ? `${csvFile.name} — each label verified against its row (full 7-field check)`
-              : 'Optional — verify each label against its COLA record (matched by filename).'}{' '}
-            · <a href="/application-template.csv" download>template ↓</a>
+            {files.length > 0
+              ? `${files.length} label(s) added`
+              : 'Up to 300 · PNG · JPEG · WebP · GIF · drop more to add'}
+            {files.length > 0 && (
+              <>
+                {' · '}
+                <button type="button" className={styles.clearBtn} onClick={() => setFiles([])}>
+                  clear
+                </button>
+              </>
+            )}
           </p>
         </div>
-
         <div className={styles.submitRow}>
           <button type="submit" className={styles.submit} disabled={job?.status === 'running'}>
             {job?.status === 'running' ? 'Screening…' : 'Screen batch'}
@@ -241,14 +244,6 @@ export default function Batch() {
             <div className={styles.progressBar} aria-hidden="true">
               <div className={styles.progressFill} style={{ width: `${(job.completed / job.total) * 100}%` }} />
             </div>
-
-            {matched != null && (
-              <p className={styles.modeNote}>
-                {matched > 0
-                  ? `✓ Verified against applications — ${matched} of ${job.total} label(s) matched a CSV row (full 7-field comparison).`
-                  : 'No CSV row matched — label-intrinsic checks only (government warning + standard of identity).'}
-              </p>
-            )}
 
             {job.status === 'done' && (
               <p className={styles.summary}>

@@ -260,20 +260,63 @@ export default function Home() {
             <p className={styles.empty}>— Awaiting a label. Attach one above and select “Verify label”.</p>
           )}
           {loading && <p className={styles.empty}>Reading the label…</p>}
-          {result && <Results data={result} />}
+          {result && <Results data={result} labelName={file?.name ?? null} />}
         </div>
       </section>
     </div>
   );
 }
 
-function Results({ data }: { data: VerifyResponse }) {
+/** RFC-4180 quoting — matches the batch export (src/lib/batch/csv.ts). */
+function csvCell(value: string): string {
+  return /[",\r\n]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value;
+}
+
+/** One label's verification as a CSV record: an OVERALL row, then one row per
+ *  check with the application value, the label value, the reason, and citation. */
+function buildLabelReportCsv(data: VerifyResponse): string {
+  const attention = data.verdicts.filter((x) => x.verdict !== 'PASS').length;
+  const rows: string[][] = [
+    ['field', 'verdict', 'application', 'label', 'reason', 'citation', 'authority'],
+    ['OVERALL', data.overall, '', '', `${attention} of ${data.verdicts.length} checks need attention`, '', ''],
+  ];
+  for (const v of data.verdicts) {
+    rows.push([
+      v.label,
+      v.verdict,
+      v.declared == null ? '' : String(v.declared),
+      v.extracted == null ? '' : String(v.extracted),
+      v.reason,
+      v.citation?.section ?? '',
+      v.citation?.authority ?? '',
+    ]);
+  }
+  return rows.map((r) => r.map(csvCell).join(',')).join('\r\n');
+}
+
+/** Trigger a client-side download — nothing is sent to or stored on the server. */
+function downloadCsv(filename: string, text: string): void {
+  const blob = new Blob([text], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function Results({ data, labelName }: { data: VerifyResponse; labelName: string | null }) {
   const v = VERDICT[data.overall];
   const attention = data.verdicts.filter((x) => x.verdict !== 'PASS').length;
   const summary =
     data.overall === 'PASS'
       ? 'All checks passed'
       : `${attention} of ${data.verdicts.length} checks need attention`;
+  const stem =
+    (labelName ?? 'label').replace(/\.[^.]+$/, '').replace(/[^a-z0-9]+/gi, '-').replace(/^-+|-+$/g, '').toLowerCase() ||
+    'label';
   return (
     <>
       <div className={styles.overall} role="status">
@@ -287,6 +330,16 @@ function Results({ data }: { data: VerifyResponse }) {
         {data.meta.cached && <span className={styles.cachePill}>cached</span>} · source: {data.meta.source}
         {data.meta.source === 'mock' && ' (sample data — no live model)'}
       </p>
+
+      <div className={styles.reportRow}>
+        <button
+          type="button"
+          className={styles.downloadBtn}
+          onClick={() => downloadCsv(`ttb-label-${stem}.csv`, buildLabelReportCsv(data))}
+        >
+          ↓ Download report (CSV)
+        </button>
+      </div>
 
       <ol className={styles.findings}>
         {data.verdicts.map((fv) => {

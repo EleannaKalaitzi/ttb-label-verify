@@ -1,8 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { getSharedExtractionProvider } from '../extraction/provider';
 import type { ExtractionInput } from '../extraction/provider';
-import { verify, verifyLabelOnly } from '../verify/verify';
-import type { ApplicationData } from '../verify/verify';
+import { verifyLabelOnly } from '../verify/verify';
 import type { FieldVerdict, Verdict } from '../verdict/types';
 
 /**
@@ -20,10 +19,6 @@ export interface BatchInput {
   filename: string;
   imageBase64: string;
   mediaType: ExtractionInput['mediaType'];
-  /** The label's application record, matched from an uploaded CSV by filename.
-   *  When present, the label is verified against it (full 7-field comparison);
-   *  when absent, only the label-intrinsic checks run. */
-  declared?: ApplicationData | null;
 }
 
 export interface BatchItem {
@@ -84,8 +79,7 @@ async function run(job: BatchJob, inputs: BatchInput[]): Promise<void> {
       const item = job.items[i];
       try {
         const res = await provider.extract({ imageBase64: inputs[i].imageBase64, mediaType: inputs[i].mediaType });
-        const declared = inputs[i].declared;
-        const result = declared ? verify(res.data, declared) : verifyLabelOnly(res.data);
+        const result = verifyLabelOnly(res.data);
         item.overall = result.overall;
         item.verdicts = result.verdicts;
         item.latencyMs = Math.round(res.latencyMs);
