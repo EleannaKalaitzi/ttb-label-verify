@@ -12,7 +12,8 @@
     "test": "node --import tsx --test \"src/**/*.test.ts\"",
     "demo": "tsx scripts/demo-verdicts.ts",
     "fixtures": "tsx scripts/render-fixtures.ts",
-    "measure": "node --env-file-if-exists=.env --import tsx scripts/measure.ts"
+    "measure": "node --env-file-if-exists=.env --import tsx scripts/measure.ts",
+    "samples:record": "node --env-file-if-exists=.env --import tsx scripts/record-samples.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.112.1",

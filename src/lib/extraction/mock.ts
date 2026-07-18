@@ -5,7 +5,7 @@ import type { ExtractionProvider, ExtractionInput, ExtractionResult } from './pr
 import type { Extraction } from './schema';
 import { REQUIRED_WARNING_TEXT } from './prompt';
 import { FIXTURE_EXTRACTIONS } from './fixtures.generated';
-import { SAMPLE_EXTRACTIONS } from '../samples/labels';
+import { SAMPLE_READS } from '../samples/reads.generated';
 
 // Real sample photos (public/samples/) mapped by content hash to their authored
 // read, built lazily on first use so mock mode returns the right verdict for the
@@ -17,7 +17,7 @@ function sampleByHash(): Record<string, Extraction> {
   try {
     const dir = join(process.cwd(), 'public', 'samples');
     for (const name of readdirSync(dir)) {
-      const ext = SAMPLE_EXTRACTIONS[name];
+      const ext = SAMPLE_READS[name];
       if (!ext) continue;
       const hash = createHash('sha256').update(readFileSync(join(dir, name))).digest('hex');
       sampleHashes[hash] = ext;
